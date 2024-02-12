@@ -1,0 +1,4 @@
+name: DynamicMarket
+version: '${version}'
+main: me.wuzzyxy.dynamicmarket.DynamicMarket
+api-version: '1.16'

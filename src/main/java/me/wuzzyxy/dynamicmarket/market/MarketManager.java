@@ -1,7 +1,8 @@
-package me.wuzzyxy.dynamicmarket.items;
+package me.wuzzyxy.dynamicmarket.market;
 
 import me.wuzzyxy.dynamicmarket.DynamicMarket;
 import me.wuzzyxy.dynamicmarket.database.Database;
+import me.wuzzyxy.dynamicmarket.items.MarketItem;
 
 import javax.swing.text.html.Option;
 import java.util.ArrayList;

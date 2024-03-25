@@ -1,4 +1,4 @@
-package me.wuzzyxy.dynamicmarket.items;
+package me.wuzzyxy.dynamicmarket.market;
 
 import me.wuzzyxy.dynamicmarket.database.Database;
 

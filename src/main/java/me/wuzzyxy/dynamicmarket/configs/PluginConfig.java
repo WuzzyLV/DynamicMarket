@@ -1,4 +1,6 @@
-package me.wuzzyxy.dynamicmarket;
+package me.wuzzyxy.dynamicmarket.configs;
+
+import me.wuzzyxy.dynamicmarket.DynamicMarket;
 
 public class PluginConfig {
     private DynamicMarket plugin;

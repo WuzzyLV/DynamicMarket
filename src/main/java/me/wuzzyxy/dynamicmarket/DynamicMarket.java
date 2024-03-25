@@ -1,23 +1,21 @@
 package me.wuzzyxy.dynamicmarket;
 
+import me.wuzzyxy.dynamicmarket.configs.PluginConfig;
 import me.wuzzyxy.dynamicmarket.database.Database;
 import me.wuzzyxy.dynamicmarket.database.MySqlDatabase;
+import me.wuzzyxy.dynamicmarket.market.MarketManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Enumeration;
 
 public final class DynamicMarket extends JavaPlugin {
 
     private PluginConfig config;
     private Database database;
+    private MarketManager marketManager;
 
 
     @Override
@@ -38,6 +36,7 @@ public final class DynamicMarket extends JavaPlugin {
             getServer().getPluginManager().disablePlugin(this);
         }
 
+        marketManager = new MarketManager(this, database);
 
 
 
@@ -48,7 +47,7 @@ public final class DynamicMarket extends JavaPlugin {
         // Plugin shutdown logic
     }
 
-    //Statically coded cause only accessed once and less error prone :)
+    //Statically coded cause only accessed once and less error-prone :)
     public ArrayList<String> getSQLScripts() throws IOException {
         ArrayList<String> scripts = new ArrayList<>();
         InputStream stream;
@@ -64,6 +63,8 @@ public final class DynamicMarket extends JavaPlugin {
     public PluginConfig getPluginConfig() {
         return config;
     }
+
+    public MarketManager getMarketManager() { return marketManager; }
     public void reloadPluginConfig() {
         config = new PluginConfig(this);
     }

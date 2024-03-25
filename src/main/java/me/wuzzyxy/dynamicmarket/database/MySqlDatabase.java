@@ -3,7 +3,7 @@ package me.wuzzyxy.dynamicmarket.database;
 import com.mysql.cj.jdbc.MysqlDataSource;
 import me.wuzzyxy.dynamicmarket.DynamicMarket;
 import me.wuzzyxy.dynamicmarket.items.MarketItem;
-import me.wuzzyxy.dynamicmarket.PluginConfig;
+import me.wuzzyxy.dynamicmarket.configs.PluginConfig;
 
 import java.io.IOException;
 import java.sql.*;

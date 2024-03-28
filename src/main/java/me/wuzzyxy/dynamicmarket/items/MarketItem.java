@@ -39,6 +39,10 @@ public class MarketItem {
         this.basePrice = basePrice;
     }
 
+    public void setMinPrice(double minPrice) {
+        this.minPrice = minPrice;
+    }
+
     public void setBoughtAmount(int boughtAmount) {
         this.boughtAmount = boughtAmount;
     }
@@ -46,4 +50,26 @@ public class MarketItem {
     public void setSoldAmount(int soldAmount) {
         this.soldAmount = soldAmount;
     }
+
+    public String toString() {
+        return "MarketItem{" +
+                "name='" + name + '\'' +
+                ", basePrice=" + basePrice +
+                ", minPrice=" + minPrice +
+                ", boughtAmount=" + boughtAmount +
+                ", soldAmount=" + soldAmount +
+                '}';
+    }
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null || getClass() != obj.getClass()) {
+            return false;
+        }
+        MarketItem item = (MarketItem) obj;
+        return name.equals(item.name);
+    }
+
 }

@@ -4,8 +4,6 @@ import me.wuzzyxy.dynamicmarket.DynamicMarket;
 import me.wuzzyxy.dynamicmarket.database.Database;
 import me.wuzzyxy.dynamicmarket.items.MarketItem;
 
-import javax.swing.text.html.Option;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -14,19 +12,25 @@ public class MarketManager {
     private final DynamicMarket plugin;
     private final Database database;
 
+    private final MarketInitializer initializer;
+    private final MarketDatabaseHandler databaseHandler;
+
     private final List<MarketItem> items;
     public MarketManager(DynamicMarket plugin, Database database) {
         this.plugin = plugin;
         this.database = database;
 
-        items = getAllItems();
+        items = getAllDBItems();
         if (items == null) {
             plugin.getLogger().severe("Failed to load items from database");
         }
 
+        this.databaseHandler = new MarketDatabaseHandler(this, database, plugin);
+        this.initializer = new MarketInitializer(plugin.getItemConfig(), this);
+
     }
 
-    private List<MarketItem> getAllItems() {
+    private List<MarketItem> getAllDBItems() {
         return database.getAllItems();
     }
 
@@ -63,4 +67,15 @@ public class MarketManager {
         return removeItem(item.getName());
     }
 
+    public List<MarketItem> getAllItems() {
+        return items;
+    }
+
+    public MarketInitializer getInitializer() {
+        return initializer;
+    }
+
+    public MarketDatabaseHandler getDatabaseHandler() {
+        return databaseHandler;
+    }
 }

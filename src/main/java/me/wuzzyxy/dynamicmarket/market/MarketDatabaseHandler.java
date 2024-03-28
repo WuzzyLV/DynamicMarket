@@ -1,14 +1,36 @@
 package me.wuzzyxy.dynamicmarket.market;
 
+import me.wuzzyxy.dynamicmarket.DynamicMarket;
 import me.wuzzyxy.dynamicmarket.database.Database;
+import me.wuzzyxy.dynamicmarket.items.MarketItem;
+import org.bukkit.Bukkit;
+
+import javax.xml.crypto.Data;
+import java.util.List;
 
 public class MarketDatabaseHandler {
     MarketManager manager;
     Database database;
+    DynamicMarket plugin;
 
-    public MarketDatabaseHandler(MarketManager manager, Database database) {
+    public MarketDatabaseHandler(MarketManager manager, Database database, DynamicMarket plugin) {
         this.manager = manager;
         this.database = database;
+        this.plugin = plugin;
+
+        starRepeatingTask();
     }
-    // Make the update loop here, and call the database to update the items every said period
+
+    public void pushItems() {
+        List<MarketItem> items = manager.getAllItems();
+
+        database.setAllItems(items);
+    }
+
+    public void starRepeatingTask(){
+        Bukkit.getServer().getScheduler().scheduleSyncRepeatingTask(plugin,
+                () -> pushItems(),
+                0, plugin.getPluginConfig().PUSH_INTERVAL * 20L
+        );
+    }
 }

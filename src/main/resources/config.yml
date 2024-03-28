@@ -6,3 +6,6 @@ mysql:
   database: test
   username: root
   password: root
+
+#  Seconds
+push_interval: 10

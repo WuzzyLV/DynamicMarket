@@ -1,5 +1,6 @@
 package me.wuzzyxy.dynamicmarket;
 
+import me.wuzzyxy.dynamicmarket.configs.ItemConfig;
 import me.wuzzyxy.dynamicmarket.configs.PluginConfig;
 import me.wuzzyxy.dynamicmarket.database.Database;
 import me.wuzzyxy.dynamicmarket.database.MySqlDatabase;
@@ -14,6 +15,7 @@ import java.util.ArrayList;
 public final class DynamicMarket extends JavaPlugin {
 
     private PluginConfig config;
+    private ItemConfig itemConfig;
     private Database database;
     private MarketManager marketManager;
 
@@ -21,8 +23,9 @@ public final class DynamicMarket extends JavaPlugin {
     @Override
     public void onEnable() {
         this.saveDefaultConfig();
-        // Plugin startup logic
+        // CONFIGS
         config = new PluginConfig(this);
+        itemConfig = new ItemConfig(this);
 
         try {
             database = new MySqlDatabase(this);
@@ -62,6 +65,10 @@ public final class DynamicMarket extends JavaPlugin {
 
     public PluginConfig getPluginConfig() {
         return config;
+    }
+
+    public ItemConfig getItemConfig() {
+        return itemConfig;
     }
 
     public MarketManager getMarketManager() { return marketManager; }

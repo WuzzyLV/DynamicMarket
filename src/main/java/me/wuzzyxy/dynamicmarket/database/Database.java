@@ -8,11 +8,17 @@ public interface Database {
     void die();
 
     MarketItem addItem(String item, double basePrice, double minPrice);
+    MarketItem addItem(String item, double basePrice, double minPrice, int boughtAmount, int soldAmount);
+    MarketItem setItem(String item, double basePrice, double minPrice, int boughtAmount, int soldAmount);
+    MarketItem setItemPrices(String item, double basePrice, double minPrice);
     boolean removeItem(String item);
     MarketItem getItem(String item);
     List<MarketItem> getAllItems();
+    List<MarketItem> setAllItems(List<MarketItem> items);
     MarketItem setBasePrice(MarketItem item, double basePrice);
     MarketItem getBasePrice(MarketItem item);
+    MarketItem setMinPrice(MarketItem item, double minPrice);
+    MarketItem getMinPrice(MarketItem item);
 
     MarketItem getBoughtAmount(MarketItem item);
     MarketItem getSoldAmount(MarketItem item);

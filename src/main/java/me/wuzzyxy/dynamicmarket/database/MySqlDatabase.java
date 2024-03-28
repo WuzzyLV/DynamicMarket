@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
+@SuppressWarnings("ALL")
 public class MySqlDatabase implements Database{
 
     private final DynamicMarket plugin;
@@ -77,6 +78,64 @@ public class MySqlDatabase implements Database{
             statement.setString(1, item);
             statement.setDouble(2, basePrice);
             statement.setDouble(3, minPrice);
+            statement.execute();
+            statement.close();
+            return new MarketItem(item, basePrice, 0, 0, minPrice);
+        } catch (SQLException throwables) {
+            logger.warning(throwables.getMessage());
+            return null;
+        }
+    }
+
+    @Override
+    public MarketItem addItem(String item, double basePrice, double minPrice, int boughtAmount, int soldAmount) {
+        try {
+            PreparedStatement statement = getConnection().prepareStatement(
+                    "INSERT INTO items (item_name, base_price, min_price, bought_amount, sold_amount) VALUES (?, ?, ?, ?, ?);"
+            );
+            statement.setString(1, item);
+            statement.setDouble(2, basePrice);
+            statement.setDouble(3, minPrice);
+            statement.setInt(4, boughtAmount);
+            statement.setInt(5, soldAmount);
+            statement.execute();
+            statement.close();
+            return new MarketItem(item, basePrice, boughtAmount, soldAmount, minPrice);
+        } catch (SQLException throwables) {
+            logger.warning(throwables.getMessage());
+            return null;
+        }
+    }
+
+    @Override
+    public MarketItem setItem(String item, double basePrice, double minPrice, int boughtAmount, int soldAmount) {
+        try {
+            PreparedStatement statement = getConnection().prepareStatement(
+                    "UPDATE items SET base_price = ?, min_price = ?, bought_amount = ?, sold_amount = ? WHERE item_name = ?;"
+            );
+            statement.setDouble(1, basePrice);
+            statement.setDouble(2, minPrice);
+            statement.setInt(3, boughtAmount);
+            statement.setInt(4, soldAmount);
+            statement.setString(5, item);
+            statement.execute();
+            statement.close();
+            return new MarketItem(item, basePrice, boughtAmount, soldAmount, minPrice);
+        } catch (SQLException throwables) {
+            logger.warning(throwables.getMessage());
+            return null;
+        }
+    }
+
+    @Override
+    public MarketItem setItemPrices(String item, double basePrice, double minPrice) {
+        try {
+            PreparedStatement statement = getConnection().prepareStatement(
+                    "UPDATE items SET base_price = ?, min_price = ? WHERE item_name = ?;"
+            );
+            statement.setDouble(1, basePrice);
+            statement.setDouble(2, minPrice);
+            statement.setString(3, item);
             statement.execute();
             statement.close();
             return new MarketItem(item, basePrice, 0, 0, minPrice);
@@ -154,6 +213,21 @@ public class MySqlDatabase implements Database{
     }
 
     @Override
+    public List<MarketItem> setAllItems(List<MarketItem> items) {
+        for (MarketItem item : items){
+            MarketItem dbItem = getItem(item.getName());
+
+            if (dbItem==null){
+                addItem(item.getName(), item.getBasePrice(), item.getMinPrice(), item.getBoughtAmount(), item.getSoldAmount());
+                continue;
+            }
+            setItemPrices(item.getName(), item.getBasePrice(), item.getMinPrice());
+        }
+
+        return getAllItems();
+    }
+
+    @Override
     public MarketItem setBasePrice(MarketItem item, double basePrice){
         try {
             PreparedStatement statement = getConnection().prepareStatement(
@@ -182,6 +256,41 @@ public class MySqlDatabase implements Database{
             if (basePrice == 0) return null;
             statement.close();
             return new MarketItem(item.getName(), basePrice, item.getBoughtAmount(), item.getSoldAmount(), item.getMinPrice());
+        } catch (SQLException throwables) {
+            logger.warning(throwables.getMessage());
+            return null;
+        }
+    }
+
+    @Override
+    public MarketItem setMinPrice(MarketItem item, double minPrice){
+        try {
+            PreparedStatement statement = getConnection().prepareStatement(
+                    "UPDATE items SET min_price = ? WHERE item_name = ?;"
+            );
+            statement.setDouble(1, minPrice);
+            statement.setString(2, item.getName());
+            statement.execute();
+            statement.close();
+            return new MarketItem(item.getName(), item.getBasePrice(), item.getBoughtAmount(), item.getSoldAmount(), minPrice);
+        } catch (SQLException throwables) {
+            logger.warning(throwables.getMessage());
+            return null;
+        }
+    }
+
+    @Override
+    public MarketItem getMinPrice(MarketItem item) {
+        try{
+            PreparedStatement statement = getConnection().prepareStatement(
+                    "SELECT min_price FROM items WHERE item_name = ?;"
+            );
+            statement.setString(1, item.getName());
+            statement.execute();
+            double min_price = statement.getResultSet().getDouble("min_price");
+            if (min_price == 0) return null;
+            statement.close();
+            return new MarketItem(item.getName(), item.getBasePrice(), item.getBoughtAmount(), item.getSoldAmount(), min_price);
         } catch (SQLException throwables) {
             logger.warning(throwables.getMessage());
             return null;

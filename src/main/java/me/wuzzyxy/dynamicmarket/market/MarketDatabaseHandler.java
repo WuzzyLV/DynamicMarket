@@ -25,11 +25,13 @@ public class MarketDatabaseHandler {
         List<MarketItem> items = manager.getAllItems();
 
         database.setAllItems(items);
+
+        plugin.getLogger().info("Pushed items to database");
     }
 
     public void starRepeatingTask(){
         Bukkit.getServer().getScheduler().scheduleSyncRepeatingTask(plugin,
-                () -> pushItems(),
+                this::pushItems,
                 0, plugin.getPluginConfig().PUSH_INTERVAL * 20L
         );
     }

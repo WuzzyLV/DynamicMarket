@@ -1,5 +1,7 @@
 package me.wuzzyxy.dynamicmarket;
 
+import me.wuzzyxy.dynamicmarket.commands.CommandCompleter;
+import me.wuzzyxy.dynamicmarket.commands.DMarketCommand;
 import me.wuzzyxy.dynamicmarket.configs.ItemConfig;
 import me.wuzzyxy.dynamicmarket.configs.PluginConfig;
 import me.wuzzyxy.dynamicmarket.database.Database;
@@ -41,6 +43,9 @@ public final class DynamicMarket extends JavaPlugin {
 
         marketManager = new MarketManager(this, database);
 
+        // COMMANDS
+        this.getCommand("dmarket").setExecutor(new DMarketCommand(this));
+        this.getCommand("dmarket").setTabCompleter(new CommandCompleter(marketManager));
 
 
     }

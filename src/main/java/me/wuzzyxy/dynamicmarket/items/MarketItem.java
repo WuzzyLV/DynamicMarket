@@ -1,6 +1,6 @@
 package me.wuzzyxy.dynamicmarket.items;
 
-public class MarketItem {
+public class MarketItem implements Cloneable{
     private final String name;
     private double basePrice;
     private double minPrice;
@@ -13,6 +13,7 @@ public class MarketItem {
         this.boughtAmount = boughtAmount;
         this.soldAmount = soldAmount;
         this.minPrice = minPrice;
+
     }
 
     public String getName() {
@@ -70,6 +71,14 @@ public class MarketItem {
         }
         MarketItem item = (MarketItem) obj;
         return name.equals(item.name);
+    }
+
+    public MarketItem clone() {
+        try {
+            return (MarketItem) super.clone();
+        } catch (CloneNotSupportedException e) {
+            return null;
+        }
     }
 
 }

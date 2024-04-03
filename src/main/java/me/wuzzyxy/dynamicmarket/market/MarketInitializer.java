@@ -19,7 +19,7 @@ public class MarketInitializer {
         this.manager = manager;
 
         List<MarketItem> configItems = config.getAllItems();
-        List<MarketItem> managerItems = manager.getAllItems();
+        List<MarketItem> managerItems = manager.getWorkingItems();
 
         //check if config item values are different if so update
         for (MarketItem configItem : configItems) {

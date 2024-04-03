@@ -13,6 +13,9 @@ public class MarketDatabaseHandler {
     Database database;
     DynamicMarket plugin;
 
+    //Dirty just for debug
+    public static Long lastPushTime;
+
     public MarketDatabaseHandler(MarketManager manager, Database database, DynamicMarket plugin) {
         this.manager = manager;
         this.database = database;
@@ -22,10 +25,15 @@ public class MarketDatabaseHandler {
     }
 
     public void pushItems() {
-        List<MarketItem> items = manager.getAllItems();
+        List<MarketItem> workingItems = manager.getWorkingItems();
+        System.out.println("Working items: " + workingItems.toString());
+        manager.getPersistedItems().clear();
+        database.setAllItems(workingItems).forEach(
+                item -> manager.getPersistedItems().add(item)
+        );
+        System.out.println("Persisted items: " + manager.getPersistedItems().toString());
 
-        database.setAllItems(items);
-
+        lastPushTime = System.currentTimeMillis();
         plugin.getLogger().info("Pushed items to database");
     }
 

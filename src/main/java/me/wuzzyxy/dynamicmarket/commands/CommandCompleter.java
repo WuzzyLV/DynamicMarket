@@ -14,10 +14,11 @@ public class CommandCompleter implements TabCompleter {
 
     MarketManager marketManager;
     List<String> items;
-    List<String> commands = List.of("help", "reload", "buy", "sell");
-    public CommandCompleter(MarketManager marketManager) {
+    List<String> commands;
+    public CommandCompleter(MarketManager marketManager, List<String> commands) {
         this.marketManager = marketManager;
-        items = marketManager.getAllItems().stream().map(MarketItem::getName).toList();
+        this.commands = commands;
+        items = marketManager.getPersistedItems().stream().map(MarketItem::getName).toList();
     }
     @Override
     public List<String> onTabComplete(CommandSender commandSender, Command command, String s, String[] strings) {
@@ -26,7 +27,7 @@ public class CommandCompleter implements TabCompleter {
             StringUtil.copyPartialMatches(strings[0], commands, results);
             return results;
         }
-        if (strings[0].equals("buy") || strings[0].equals("sell")) {
+        if (strings[0].equals("buy") || strings[0].equals("sell") || strings[0].equals("debug") || strings[0].equals("set")) {
             if (strings.length == 2)
                 StringUtil.copyPartialMatches(strings[1], items, results);
             else if (strings.length == 3)

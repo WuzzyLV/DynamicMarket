@@ -221,9 +221,12 @@ public class MySqlDatabase implements Database{
                 addItem(item.getName(), item.getBasePrice(), item.getMinPrice(), item.getBoughtAmount(), item.getSoldAmount());
                 continue;
             }
-            setItemPrices(item.getName(), item.getBasePrice(), item.getMinPrice());
+            if (dbItem.getBasePrice() != item.getBasePrice() || dbItem.getMinPrice() != item.getMinPrice()){
+                setItem(item.getName(), item.getBasePrice(), item.getMinPrice(), item.getBoughtAmount(), item.getSoldAmount());
+                continue;
+            }
+            setAmounts(item, item.getBoughtAmount(), item.getSoldAmount());
         }
-
         return getAllItems();
     }
 
@@ -395,6 +398,24 @@ public class MySqlDatabase implements Database{
             statement.execute();
             statement.close();
             return new MarketItem(item.getName(), item.getBasePrice(), item.getBoughtAmount(), amount, item.getMinPrice());
+        } catch (SQLException throwables) {
+            logger.warning(throwables.getMessage());
+            return null;
+        }
+    }
+
+    @Override
+    public MarketItem setAmounts(MarketItem item, int boughtAmount, int soldAmount) {
+        try {
+            PreparedStatement statement = getConnection().prepareStatement(
+                    "UPDATE items SET bought_amount = ?, sold_amount = ? WHERE item_name = ?;"
+            );
+            statement.setInt(1, boughtAmount);
+            statement.setInt(2, soldAmount);
+            statement.setString(3, item.getName());
+            statement.execute();
+            statement.close();
+            return new MarketItem(item.getName(), item.getBasePrice(), boughtAmount, soldAmount, item.getMinPrice());
         } catch (SQLException throwables) {
             logger.warning(throwables.getMessage());
             return null;

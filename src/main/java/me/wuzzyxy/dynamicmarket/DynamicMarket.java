@@ -45,7 +45,7 @@ public final class DynamicMarket extends JavaPlugin {
 
         // COMMANDS
         this.getCommand("dmarket").setExecutor(new DMarketCommand(this));
-        this.getCommand("dmarket").setTabCompleter(new CommandCompleter(marketManager));
+
 
 
     }

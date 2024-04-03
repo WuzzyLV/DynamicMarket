@@ -26,6 +26,7 @@ public interface Database {
     MarketItem addSoldAmount(MarketItem item, int amount);
     MarketItem setBoughtAmount(MarketItem item, int amount);
     MarketItem setSoldAmount(MarketItem item, int amount);
+    MarketItem setAmounts(MarketItem item, int boughtAmount, int soldAmount);
 
     boolean createHistoryPoint(MarketItem item);
 

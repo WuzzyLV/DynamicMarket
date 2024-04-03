@@ -2,3 +2,25 @@ name: DynamicMarket
 version: '${version}'
 main: me.wuzzyxy.dynamicmarket.DynamicMarket
 api-version: '1.16'
+
+commands:
+  dmarket:
+    description: Main command for DynamicMarket
+    usage: /dmarket <subcommand>
+    permission: dynamicmarket.command
+    subcommands:
+      reload:
+        description: Reloads the plugin
+        usage: /dmarket reload
+        permission: dynamicmarket.command.reload
+      help:
+        description: Shows the help page
+        usage: /dmarket help
+      buy:
+        description: Buys an item from a market
+        usage: /dmarket buy <name> <item> [amount]
+        permission: dynamicmarket.command.buy
+      sell:
+        description: Sells an item to a market
+        usage: /dmarket sell <name> <item> [amount]
+        permission: dynamicmarket.command.sell

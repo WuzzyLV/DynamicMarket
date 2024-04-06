@@ -14,10 +14,12 @@ public class PluginConfig {
         PASSWORD= plugin.getConfig().getString("mysql.password");
 
         PUSH_INTERVAL = plugin.getConfig().getInt("push_interval");
+        PERCENTAGE = plugin.getConfig().getDouble("percentage");
 
     }
 
     public final int PUSH_INTERVAL;
+    public final double PERCENTAGE;
     public final String HOST;
     public final int PORT;
     public final String DATABASE;

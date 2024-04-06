@@ -15,6 +15,7 @@ public class MarketManager {
 
     private final MarketInitializer initializer;
     private final MarketDatabaseHandler databaseHandler;
+    private final PriceHandler priceHandler;
 
     private final List<MarketItem> workingItems;
     private final List<MarketItem> persistedItems;
@@ -38,6 +39,7 @@ public class MarketManager {
 
         this.databaseHandler = new MarketDatabaseHandler(this, database, plugin);
         this.initializer = new MarketInitializer(plugin.getItemConfig(), this);
+        this.priceHandler = new PriceHandler(plugin.getPluginConfig());
 
     }
 
@@ -105,5 +107,9 @@ public class MarketManager {
 
     public MarketDatabaseHandler getDatabaseHandler() {
         return databaseHandler;
+    }
+
+    public PriceHandler getPriceHandler() {
+        return priceHandler;
     }
 }

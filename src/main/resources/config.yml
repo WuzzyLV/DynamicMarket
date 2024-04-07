@@ -9,7 +9,5 @@ mysql:
 
 #  Seconds
 push_interval: 10
-# Percentage of how easily price can change
-percentage: 0.1
 # By how much lower the sell price is
 sell_multiplier: 0.5

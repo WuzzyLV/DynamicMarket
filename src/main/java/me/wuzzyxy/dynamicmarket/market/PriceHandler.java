@@ -4,11 +4,9 @@ import me.wuzzyxy.dynamicmarket.configs.PluginConfig;
 import me.wuzzyxy.dynamicmarket.items.MarketItem;
 
 public class PriceHandler {
-    private PluginConfig pluginConfig;
-    private double percentage;
+    private final PluginConfig pluginConfig;
     public PriceHandler(PluginConfig pluginConfig) {
         this.pluginConfig = pluginConfig;
-        percentage = pluginConfig.PERCENTAGE;
     }
 
     public double getBuyPrice(MarketItem item, int amount) {

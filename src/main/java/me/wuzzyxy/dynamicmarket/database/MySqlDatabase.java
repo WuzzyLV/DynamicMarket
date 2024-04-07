@@ -70,17 +70,18 @@ public class MySqlDatabase implements Database{
     }
 
     @Override
-    public MarketItem addItem(String item, double basePrice, double minPrice) {
+    public MarketItem addItem(String item, double basePrice, double minPrice, double percentage) {
         try {
             PreparedStatement statement = getConnection().prepareStatement(
-                    "INSERT INTO items (item_name, base_price, min_price) VALUES (?, ?, ?);"
+                    "INSERT INTO items (item_name, base_price, min_price, percentage) VALUES (?, ?, ?, ?);"
             );
             statement.setString(1, item);
             statement.setDouble(2, basePrice);
             statement.setDouble(3, minPrice);
+            statement.setDouble(4, percentage);
             statement.execute();
             statement.close();
-            return new MarketItem(item, basePrice, 0, 0, minPrice);
+            return new MarketItem(item, basePrice, 0, 0, minPrice, percentage);
         } catch (SQLException throwables) {
             logger.warning(throwables.getMessage());
             return null;
@@ -88,19 +89,21 @@ public class MySqlDatabase implements Database{
     }
 
     @Override
-    public MarketItem addItem(String item, double basePrice, double minPrice, int boughtAmount, int soldAmount) {
+    public MarketItem addItem(String item, double basePrice, double minPrice, int boughtAmount, int soldAmount, double percentage) {
         try {
             PreparedStatement statement = getConnection().prepareStatement(
-                    "INSERT INTO items (item_name, base_price, min_price, bought_amount, sold_amount) VALUES (?, ?, ?, ?, ?);"
+                    "INSERT INTO items (item_name, base_price, min_price, bought_amount, sold_amount, percentage)" +
+                            " VALUES (?, ?, ?, ?, ?, ?);"
             );
             statement.setString(1, item);
             statement.setDouble(2, basePrice);
             statement.setDouble(3, minPrice);
             statement.setInt(4, boughtAmount);
             statement.setInt(5, soldAmount);
+            statement.setDouble(6, percentage);
             statement.execute();
             statement.close();
-            return new MarketItem(item, basePrice, boughtAmount, soldAmount, minPrice);
+            return new MarketItem(item, basePrice, boughtAmount, soldAmount, minPrice, percentage);
         } catch (SQLException throwables) {
             logger.warning(throwables.getMessage());
             return null;
@@ -108,19 +111,20 @@ public class MySqlDatabase implements Database{
     }
 
     @Override
-    public MarketItem setItem(String item, double basePrice, double minPrice, int boughtAmount, int soldAmount) {
+    public MarketItem setItem(String item, double basePrice, double minPrice, int boughtAmount, int soldAmount, double percentage) {
         try {
             PreparedStatement statement = getConnection().prepareStatement(
-                    "UPDATE items SET base_price = ?, min_price = ?, bought_amount = ?, sold_amount = ? WHERE item_name = ?;"
+                    "UPDATE items SET base_price = ?, min_price = ?, bought_amount = ?, sold_amount = ?, percentage = ? WHERE item_name = ?;"
             );
             statement.setDouble(1, basePrice);
             statement.setDouble(2, minPrice);
             statement.setInt(3, boughtAmount);
             statement.setInt(4, soldAmount);
-            statement.setString(5, item);
+            statement.setDouble(5, percentage);
+            statement.setString(6, item);
             statement.execute();
             statement.close();
-            return new MarketItem(item, basePrice, boughtAmount, soldAmount, minPrice);
+            return new MarketItem(item, basePrice, boughtAmount, soldAmount, minPrice, percentage);
         } catch (SQLException throwables) {
             logger.warning(throwables.getMessage());
             return null;
@@ -128,17 +132,18 @@ public class MySqlDatabase implements Database{
     }
 
     @Override
-    public MarketItem setItemPrices(String item, double basePrice, double minPrice) {
+    public MarketItem setItemStatics(String item, double basePrice, double minPrice, double percentage) {
         try {
             PreparedStatement statement = getConnection().prepareStatement(
-                    "UPDATE items SET base_price = ?, min_price = ? WHERE item_name = ?;"
+                    "UPDATE items SET base_price = ?, min_price = ?, percentage = ? WHERE item_name = ?;"
             );
             statement.setDouble(1, basePrice);
             statement.setDouble(2, minPrice);
-            statement.setString(3, item);
+            statement.setDouble(3, percentage);
+            statement.setString(4, item);
             statement.execute();
             statement.close();
-            return new MarketItem(item, basePrice, 0, 0, minPrice);
+            return new MarketItem(item, basePrice, 0, 0, minPrice, percentage);
         } catch (SQLException throwables) {
             logger.warning(throwables.getMessage());
             return null;
@@ -177,7 +182,8 @@ public class MySqlDatabase implements Database{
                     resultSet.getDouble("base_price"),
                     resultSet.getInt("bought_amount"),
                     resultSet.getInt("sold_amount"),
-                    resultSet.getDouble("min_price")
+                    resultSet.getDouble("min_price"),
+                    resultSet.getDouble("percentage")
             );
             statement.close();
             return item;
@@ -201,7 +207,8 @@ public class MySqlDatabase implements Database{
                         resultSet.getDouble("base_price"),
                         resultSet.getInt("bought_amount"),
                         resultSet.getInt("sold_amount"),
-                        resultSet.getDouble("min_price")
+                        resultSet.getDouble("min_price"),
+                        resultSet.getDouble("percentage")
                 ));
             }
             statement.close();
@@ -218,11 +225,11 @@ public class MySqlDatabase implements Database{
             MarketItem dbItem = getItem(item.getName());
 
             if (dbItem==null){
-                addItem(item.getName(), item.getBasePrice(), item.getMinPrice(), item.getBoughtAmount(), item.getSoldAmount());
+                addItem(item.getName(), item.getBasePrice(), item.getMinPrice(), item.getBoughtAmount(), item.getSoldAmount(), item.getPercentage());
                 continue;
             }
-            if (dbItem.getBasePrice() != item.getBasePrice() || dbItem.getMinPrice() != item.getMinPrice()){
-                setItem(item.getName(), item.getBasePrice(), item.getMinPrice(), item.getBoughtAmount(), item.getSoldAmount());
+            if (dbItem.getBasePrice() != item.getBasePrice() || dbItem.getMinPrice() != item.getMinPrice() || dbItem.getPercentage() != item.getPercentage()){
+                setItem(item.getName(), item.getBasePrice(), item.getMinPrice(), item.getBoughtAmount(), item.getSoldAmount(), item.getPercentage());
                 continue;
             }
             setAmounts(item, item.getBoughtAmount(), item.getSoldAmount());
@@ -240,7 +247,7 @@ public class MySqlDatabase implements Database{
             statement.setString(2, item.getName());
             statement.execute();
             statement.close();
-            return new MarketItem(item.getName(), basePrice, item.getBoughtAmount(), item.getSoldAmount(), item.getMinPrice());
+            return new MarketItem(item.getName(), basePrice, item.getBoughtAmount(), item.getSoldAmount(), item.getMinPrice(), item.getPercentage());
         } catch (SQLException throwables) {
             logger.warning(throwables.getMessage());
             return null;
@@ -258,7 +265,7 @@ public class MySqlDatabase implements Database{
             double basePrice = statement.getResultSet().getDouble("base_price");
             if (basePrice == 0) return null;
             statement.close();
-            return new MarketItem(item.getName(), basePrice, item.getBoughtAmount(), item.getSoldAmount(), item.getMinPrice());
+            return new MarketItem(item.getName(), basePrice, item.getBoughtAmount(), item.getSoldAmount(), item.getMinPrice(), item.getPercentage());
         } catch (SQLException throwables) {
             logger.warning(throwables.getMessage());
             return null;
@@ -275,7 +282,7 @@ public class MySqlDatabase implements Database{
             statement.setString(2, item.getName());
             statement.execute();
             statement.close();
-            return new MarketItem(item.getName(), item.getBasePrice(), item.getBoughtAmount(), item.getSoldAmount(), minPrice);
+            return new MarketItem(item.getName(), item.getBasePrice(), item.getBoughtAmount(), item.getSoldAmount(), minPrice, item.getPercentage());
         } catch (SQLException throwables) {
             logger.warning(throwables.getMessage());
             return null;
@@ -293,7 +300,7 @@ public class MySqlDatabase implements Database{
             double min_price = statement.getResultSet().getDouble("min_price");
             if (min_price == 0) return null;
             statement.close();
-            return new MarketItem(item.getName(), item.getBasePrice(), item.getBoughtAmount(), item.getSoldAmount(), min_price);
+            return new MarketItem(item.getName(), item.getBasePrice(), item.getBoughtAmount(), item.getSoldAmount(), min_price, item.getPercentage());
         } catch (SQLException throwables) {
             logger.warning(throwables.getMessage());
             return null;
@@ -311,7 +318,7 @@ public class MySqlDatabase implements Database{
             int boughtAmount = statement.getResultSet().getInt("bought_amount");
             if (boughtAmount == 0) return null;
             statement.close();
-            return new MarketItem(item.getName(), item.getBasePrice(), boughtAmount, item.getSoldAmount(), item.getMinPrice());
+            return new MarketItem(item.getName(), item.getBasePrice(), boughtAmount, item.getSoldAmount(), item.getMinPrice(), item.getPercentage());
         } catch (SQLException throwables) {
             logger.warning(throwables.getMessage());
             return null;
@@ -329,7 +336,7 @@ public class MySqlDatabase implements Database{
             int soldAmount = statement.getResultSet().getInt("sold_amount");
             if (soldAmount == 0) return null;
             statement.close();
-            return new MarketItem(item.getName(), item.getBasePrice(), item.getBoughtAmount(), soldAmount, item.getMinPrice());
+            return new MarketItem(item.getName(), item.getBasePrice(), item.getBoughtAmount(), soldAmount, item.getMinPrice(), item.getPercentage());
         } catch (SQLException throwables) {
             logger.warning(throwables.getMessage());
             return null;
@@ -346,7 +353,7 @@ public class MySqlDatabase implements Database{
             statement.setString(2, item.getName());
             statement.execute();
             statement.close();
-            return new MarketItem(item.getName(), item.getBasePrice(), item.getBoughtAmount() + amount, item.getSoldAmount(), item.getMinPrice());
+            return new MarketItem(item.getName(), item.getBasePrice(), item.getBoughtAmount() + amount, item.getSoldAmount(), item.getMinPrice(), item.getPercentage());
         } catch (SQLException throwables) {
             logger.warning(throwables.getMessage());
             return null;
@@ -363,7 +370,7 @@ public class MySqlDatabase implements Database{
             statement.setString(2, item.getName());
             statement.execute();
             statement.close();
-            return new MarketItem(item.getName(), item.getBasePrice(), item.getBoughtAmount(), item.getSoldAmount() + amount, item.getMinPrice());
+            return new MarketItem(item.getName(), item.getBasePrice(), item.getBoughtAmount(), item.getSoldAmount() + amount, item.getMinPrice(), item.getPercentage());
         } catch (SQLException throwables) {
             logger.warning(throwables.getMessage());
             return null;
@@ -380,7 +387,7 @@ public class MySqlDatabase implements Database{
             statement.setString(2, item.getName());
             statement.execute();
             statement.close();
-            return new MarketItem(item.getName(), item.getBasePrice(), amount, item.getSoldAmount(), item.getMinPrice());
+            return new MarketItem(item.getName(), item.getBasePrice(), amount, item.getSoldAmount(), item.getMinPrice(), item.getPercentage());
         } catch (SQLException throwables) {
             logger.warning(throwables.getMessage());
             return null;
@@ -397,7 +404,7 @@ public class MySqlDatabase implements Database{
             statement.setString(2, item.getName());
             statement.execute();
             statement.close();
-            return new MarketItem(item.getName(), item.getBasePrice(), item.getBoughtAmount(), amount, item.getMinPrice());
+            return new MarketItem(item.getName(), item.getBasePrice(), item.getBoughtAmount(), amount, item.getMinPrice(), item.getPercentage());
         } catch (SQLException throwables) {
             logger.warning(throwables.getMessage());
             return null;
@@ -415,13 +422,17 @@ public class MySqlDatabase implements Database{
             statement.setString(3, item.getName());
             statement.execute();
             statement.close();
-            return new MarketItem(item.getName(), item.getBasePrice(), boughtAmount, soldAmount, item.getMinPrice());
+            return new MarketItem(item.getName(), item.getBasePrice(), boughtAmount, soldAmount, item.getMinPrice(), item.getPercentage());
         } catch (SQLException throwables) {
             logger.warning(throwables.getMessage());
             return null;
         }
     }
 
+    @Deprecated
+    /***
+     * Redundant because of the trigger
+     */
     @Override
     public boolean createHistoryPoint(MarketItem item) {
         try {

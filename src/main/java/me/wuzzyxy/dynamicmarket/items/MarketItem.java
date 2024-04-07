@@ -3,17 +3,18 @@ package me.wuzzyxy.dynamicmarket.items;
 public class MarketItem implements Cloneable{
     private final String name;
     private double basePrice;
+    private double percentage;
     private double minPrice;
     private int boughtAmount;
     private int soldAmount;
 
-    public MarketItem(String name, double basePrice, int boughtAmount, int soldAmount, double minPrice) {
+    public MarketItem(String name, double basePrice, int boughtAmount, int soldAmount, double minPrice, double percentage) {
         this.name = name;
         this.basePrice = basePrice;
         this.boughtAmount = boughtAmount;
         this.soldAmount = soldAmount;
         this.minPrice = minPrice;
-
+        this.percentage = percentage;
     }
 
     public String getName() {
@@ -22,6 +23,10 @@ public class MarketItem implements Cloneable{
 
     public double getBasePrice() {
         return basePrice;
+    }
+
+    public double getPercentage() {
+        return percentage;
     }
 
     public double getMinPrice() {
@@ -38,6 +43,9 @@ public class MarketItem implements Cloneable{
 
     public void setBasePrice(double basePrice) {
         this.basePrice = basePrice;
+    }
+    public void setPercentage(double percentage) {
+        this.percentage = percentage;
     }
 
     public void setMinPrice(double minPrice) {
@@ -56,6 +64,7 @@ public class MarketItem implements Cloneable{
         return "MarketItem{" +
                 "name='" + name + '\'' +
                 ", basePrice=" + basePrice +
+                ", percentage=" + percentage +
                 ", minPrice=" + minPrice +
                 ", boughtAmount=" + boughtAmount +
                 ", soldAmount=" + soldAmount +

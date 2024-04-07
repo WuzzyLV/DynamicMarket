@@ -38,7 +38,8 @@ public class ItemConfig {
         for (String key : config.getConfigurationSection("items").getKeys(false)) {
             double basePrice = config.getDouble("items." + key + ".base_price");
             double minPrice = config.getDouble("items." + key + ".min_price");
-            items.add(new MarketItem(key, basePrice, 0,0, minPrice));
+            double percentage = config.getDouble("items." + key + ".percentage");
+            items.add(new MarketItem(key, basePrice, 0,0, minPrice, percentage));
         }
         return items;
     }

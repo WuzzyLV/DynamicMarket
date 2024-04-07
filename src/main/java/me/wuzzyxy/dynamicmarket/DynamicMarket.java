@@ -1,12 +1,14 @@
 package me.wuzzyxy.dynamicmarket;
 
-import me.wuzzyxy.dynamicmarket.commands.CommandCompleter;
 import me.wuzzyxy.dynamicmarket.commands.DMarketCommand;
 import me.wuzzyxy.dynamicmarket.configs.ItemConfig;
 import me.wuzzyxy.dynamicmarket.configs.PluginConfig;
 import me.wuzzyxy.dynamicmarket.database.Database;
 import me.wuzzyxy.dynamicmarket.database.MySqlDatabase;
+import me.wuzzyxy.dynamicmarket.items.MarketItem;
 import me.wuzzyxy.dynamicmarket.market.MarketManager;
+import me.wuzzyxy.dynamicmarket.placeholders.BuyPriceExpansion;
+import me.wuzzyxy.dynamicmarket.placeholders.SellPriceExpansion;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.IOException;
@@ -46,7 +48,11 @@ public final class DynamicMarket extends JavaPlugin {
         // COMMANDS
         this.getCommand("dmarket").setExecutor(new DMarketCommand(this));
 
-
+        //Placeholders
+        if (getServer().getPluginManager().getPlugin("PlaceholderAPI") != null) {
+            new BuyPriceExpansion(this, marketManager, marketManager.getPriceHandler()).register();
+            new SellPriceExpansion(this, marketManager, marketManager.getPriceHandler()).register();
+        }
 
     }
 
@@ -63,6 +69,9 @@ public final class DynamicMarket extends JavaPlugin {
         scripts.add(new String(stream.readAllBytes()));
 
         stream = getClass().getClassLoader().getResourceAsStream("sql/item_history.sql");
+        scripts.add(new String(stream.readAllBytes()));
+
+        stream = getClass().getClassLoader().getResourceAsStream("sql/item_history_trigger.sql");
         scripts.add(new String(stream.readAllBytes()));
 
         return scripts;

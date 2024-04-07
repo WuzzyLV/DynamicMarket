@@ -1,5 +1,129 @@
 items:
-  #oak_log:
-    #base_price: 10
-    #percentage: 0.1
-    #min_price: 5
+  gravel:
+    base_price: 1
+    percentage: 0.0001
+    min_price: 0.06
+  sand:
+    base_price: 0.5
+    percentage: 0.0001
+    min_price: 0.03
+  red_sand:
+    base_price: 0.5
+    percentage: 0.0001
+    min_price: 0.03
+  clay:
+    base_price: 6
+    percentage: 0.0001
+    min_price: 0.08
+  grass_block:
+    base_price: 1
+    percentage: 0.0001
+    min_price: 0.06
+  podzol:
+    base_price: 1.5
+    percentage: 0.0001
+    min_price: 0.1
+  dirt:
+    base_price: 0.5
+    percentage: 0.0001
+    min_price: 0.03
+  oak_log:
+    base_price: 4
+    percentage: 0.0001
+    min_price: 0.5
+  spruce_log:
+    base_price: 4
+    percentage: 0.0001
+    min_price: 0.5
+  dark_oak_log:
+    base_price: 4
+    percentage: 0.0001
+    min_price: 0.5
+  birch_log:
+    base_price: 4
+    percentage: 0.0001
+    min_price: 0.5
+  jungle_log:
+    base_price: 4
+    percentage: 0.0001
+    min_price: 0.5
+  acacia_log:
+    base_price: 4
+    percentage: 0.0001
+    min_price: 0.5
+  crimson_stem:
+    base_price: 5
+    percentage: 0.0001
+    min_price: 0.5
+  warped_stem:
+    base_price: 5
+    percentage: 0.0001
+    min_price: 0.5
+  cobblestone:
+    base_price: 0.6
+    percentage: 0.0001
+    min_price: 0.04
+  stone:
+    base_price: 1
+    percentage: 0.0001
+    min_price: 0.06
+  granite:
+    base_price: 0.75
+    percentage: 0.0001
+    min_price: 0.05
+  diorite:
+    base_price: 0.75
+    percentage: 0.0001
+    min_price: 0.05
+  andesite:
+    base_price: 0.75
+    percentage: 0.0001
+    min_price: 0.05
+  calcite:
+    base_price: 1.5
+    percentage: 0.0001
+    min_price: 0.1
+  tuff:
+    base_price: 0.75
+    percentage: 0.0001
+    min_price: 0.05
+  cobbled_deepslate:
+    base_price: 0.5
+    percentage: 0.0001
+    min_price: 0.03
+  sandstone:
+    base_price: 0.5
+    percentage: 0.0001
+    min_price: 0.03
+  terracotta:
+    base_price: 1
+    percentage: 0.0001
+    min_price: 0.06
+  white_dye:
+    base_price: 2
+    percentage: 0.0001
+    min_price: 0.05
+  black_dye:
+    base_price: 2
+    percentage: 0.0001
+    min_price: 0.2
+  red_dye:
+    base_price: 2
+    percentage: 0.0001
+    min_price: 0.2
+  blue_dye:
+    base_price: 2
+    percentage: 0.0001
+    min_price: 0.2
+  yellow_dye:
+    base_price: 2
+    percentage: 0.0001
+    min_price: 0.2
+  green_dye:
+    base_price: 2
+    percentage: 0.0001
+    min_price: 0.2
+  brown_dye:
+    base_price: 2
+    percentage: 0.0001
+    min_price: 0.2

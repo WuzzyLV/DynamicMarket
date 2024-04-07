@@ -3,6 +3,9 @@ version: '${version}'
 main: me.wuzzyxy.dynamicmarket.DynamicMarket
 api-version: '1.16'
 
+softdepend:
+  - PlaceholderAPI
+
 commands:
   dmarket:
     description: Main command for DynamicMarket

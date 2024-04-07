@@ -22,17 +22,28 @@ public class MarketInitializer {
         List<MarketItem> managerItems = manager.getWorkingItems();
 
         //check if config item values are different if so update
+        boolean found;
         for (MarketItem configItem : configItems) {
+            found = false;
             for (MarketItem managerItem : managerItems) {
                 if (configItem.equals(managerItem)) {
+                    found = true;
                     if (configItem.getBasePrice() != managerItem.getBasePrice()) {
                         managerItem.setBasePrice(configItem.getBasePrice());
                     }
                     if (configItem.getMinPrice() != managerItem.getMinPrice()) {
                         managerItem.setMinPrice(configItem.getMinPrice());
                     }
+                    if (configItem.getPercentage() != managerItem.getPercentage()) {
+                        managerItem.setPercentage(configItem.getPercentage());
+                    }
                 }
             }
+            if (!found) {
+                System.out.println("Adding item: " + configItem.getName());
+                manager.addItem(configItem.getName(), configItem.getBasePrice(), configItem.getMinPrice(), configItem.getPercentage());
+            }
+            System.out.println(configItem.toString());
         }
         manager.getDatabaseHandler().pushItems();
 

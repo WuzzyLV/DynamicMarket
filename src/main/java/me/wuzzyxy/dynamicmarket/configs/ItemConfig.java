@@ -8,6 +8,7 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class ItemConfig {
     FileConfiguration config;
@@ -35,11 +36,15 @@ public class ItemConfig {
 
     public List<MarketItem> getAllItems() {
         List<MarketItem> items = new ArrayList<>();
-        for (String key : config.getConfigurationSection("items").getKeys(false)) {
-            double basePrice = config.getDouble("items." + key + ".base_price");
-            double minPrice = config.getDouble("items." + key + ".min_price");
-            double percentage = config.getDouble("items." + key + ".percentage");
-            items.add(new MarketItem(key, basePrice, 0,0, minPrice, percentage));
+        try {
+            for (String key : Objects.requireNonNull(config.getConfigurationSection("items")).getKeys(false)) {
+                double basePrice = config.getDouble("items." + key + ".base_price");
+                double minPrice = config.getDouble("items." + key + ".min_price");
+                double percentage = config.getDouble("items." + key + ".percentage");
+                items.add(new MarketItem(key, basePrice, 0,0, minPrice, percentage));
+            }
+        }catch (NullPointerException e) {
+            plugin.getLogger().severe("Failed to load items from config");
         }
         return items;
     }

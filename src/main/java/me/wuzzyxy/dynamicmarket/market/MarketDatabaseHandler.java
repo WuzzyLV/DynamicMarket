@@ -26,12 +26,10 @@ public class MarketDatabaseHandler {
 
     public void pushItems() {
         List<MarketItem> workingItems = manager.getWorkingItems();
-        System.out.println("Working items: " + workingItems.toString());
         manager.getPersistedItems().clear();
         database.setAllItems(workingItems).forEach(
                 item -> manager.getPersistedItems().add(item)
         );
-        System.out.println("Persisted items: " + manager.getPersistedItems().toString());
 
         lastPushTime = System.currentTimeMillis();
         plugin.getLogger().info("Pushed items to database");

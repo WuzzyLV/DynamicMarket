@@ -11,14 +11,11 @@ public class PluginConfig {
         PASSWORD= plugin.getConfig().getString("mysql.password");
 
         PUSH_INTERVAL = plugin.getConfig().getInt("push_interval");
-        PERCENTAGE = plugin.getConfig().getDouble("percentage");
         SELL_MULTIPLIER = plugin.getConfig().getDouble("sell_multiplier");
 
     }
 
     public final int PUSH_INTERVAL;
-    public final double PERCENTAGE;
-
     public final double SELL_MULTIPLIER;
     public final String HOST;
     public final int PORT;

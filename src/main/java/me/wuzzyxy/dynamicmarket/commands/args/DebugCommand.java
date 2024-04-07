@@ -36,7 +36,8 @@ public class DebugCommand implements ArgsCommand{
                 + ChatColor.RED+workingItem.get().getSoldAmount()
         );
         sender.sendMessage(ChatColor.translateAlternateColorCodes('&',
-                "&7Price: &a" + priceHandler.getPrice(workingItem.get(), 1)));
+                "&7Price: &a" + priceHandler.getBuyPrice(workingItem.get(), 1)));
+        sender.sendMessage("Percentage: " + workingItem.get().getPercentage());
         sender.sendMessage(
                 "Persisted Bought/Sold "
                         + ChatColor.GREEN+persistedItem.get().getBoughtAmount()
@@ -44,7 +45,8 @@ public class DebugCommand implements ArgsCommand{
                         + ChatColor.RED+persistedItem.get().getSoldAmount()
         );
         sender.sendMessage(ChatColor.translateAlternateColorCodes('&',
-                "&7Price: &a" + priceHandler.getPrice(persistedItem.get(), 1)));
+                "&7Price: &a" + priceHandler.getBuyPrice(persistedItem.get(), 1)));
+        sender.sendMessage("Percentage: " + persistedItem.get().getPercentage());
         return Optional.empty();
 
     }

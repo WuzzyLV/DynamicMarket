@@ -3,10 +3,7 @@ package me.wuzzyxy.dynamicmarket.configs;
 import me.wuzzyxy.dynamicmarket.DynamicMarket;
 
 public class PluginConfig {
-    private DynamicMarket plugin;
     public PluginConfig( DynamicMarket plugin) {
-        this.plugin = plugin;
-
         HOST= plugin.getConfig().getString("mysql.host");
         PORT= plugin.getConfig().getInt("mysql.port");
         DATABASE= plugin.getConfig().getString("mysql.database");
@@ -15,11 +12,14 @@ public class PluginConfig {
 
         PUSH_INTERVAL = plugin.getConfig().getInt("push_interval");
         PERCENTAGE = plugin.getConfig().getDouble("percentage");
+        SELL_MULTIPLIER = plugin.getConfig().getDouble("sell_multiplier");
 
     }
 
     public final int PUSH_INTERVAL;
     public final double PERCENTAGE;
+
+    public final double SELL_MULTIPLIER;
     public final String HOST;
     public final int PORT;
     public final String DATABASE;

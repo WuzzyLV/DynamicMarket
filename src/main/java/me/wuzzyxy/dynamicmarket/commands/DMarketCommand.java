@@ -39,9 +39,9 @@ public class DMarketCommand implements CommandExecutor {
             return false;
         }
 
-        subCommand.execute(args, sender).ifPresent(errors -> {
-            for (String error : errors) {
-                sender.sendMessage(error);
+        subCommand.execute(args, sender).ifPresent(messages -> {
+            for (String message : messages) {
+                sender.sendMessage(message);
             }
         });
         return true;

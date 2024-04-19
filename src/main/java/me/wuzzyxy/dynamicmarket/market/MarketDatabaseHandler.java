@@ -32,7 +32,6 @@ public class MarketDatabaseHandler {
         );
 
         lastPushTime = System.currentTimeMillis();
-        plugin.getLogger().info("Pushed items to database");
     }
 
     public void starRepeatingTask(){

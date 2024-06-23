@@ -3,8 +3,10 @@ package me.wuzzyxy.dynamicmarket.market;
 import me.wuzzyxy.dynamicmarket.DynamicMarket;
 import me.wuzzyxy.dynamicmarket.configs.ItemConfig;
 import me.wuzzyxy.dynamicmarket.items.MarketItem;
+import org.bukkit.ChatColor;
 
 import java.util.List;
+import java.util.logging.Logger;
 
 public class MarketInitializer {
     ItemConfig config;
@@ -14,7 +16,7 @@ public class MarketInitializer {
      * Gets the values from the item config and puts them
      * into the market manager and then initiates push to db
      */
-    public MarketInitializer(ItemConfig config, MarketManager manager){
+    public MarketInitializer(ItemConfig config, MarketManager manager, Logger logger) {
         this.config = config;
         this.manager = manager;
 
@@ -40,10 +42,9 @@ public class MarketInitializer {
                 }
             }
             if (!found) {
-                System.out.println("Adding item: " + configItem.getName());
+                logger.info(ChatColor.GREEN + "Adding new item: " + configItem.getName());
                 manager.addItem(configItem.getName(), configItem.getBasePrice(), configItem.getMinPrice(), configItem.getPercentage());
             }
-            System.out.println(configItem.toString());
         }
         manager.getDatabaseHandler().pushItems();
 

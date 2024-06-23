@@ -38,7 +38,7 @@ public class MarketManager {
         }
 
         this.databaseHandler = new MarketDatabaseHandler(this, database, plugin);
-        this.initializer = new MarketInitializer(plugin.getItemConfig(), this);
+        this.initializer = new MarketInitializer(plugin.getItemConfig(), this, plugin.getLogger());
         this.priceHandler = new PriceHandler(plugin.getPluginConfig());
 
     }

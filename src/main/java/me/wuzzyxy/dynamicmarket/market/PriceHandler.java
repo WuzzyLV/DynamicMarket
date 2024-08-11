@@ -17,7 +17,7 @@ public class PriceHandler {
 
     public double getSellPrice(MarketItem item, int amount) {
         double price = getBuyPrice(item, amount) * pluginConfig.SELL_MULTIPLIER;
-        return Math.max(price, item.getMinPrice());
+        return Math.max(price, item.getMinPrice() * pluginConfig.SELL_MULTIPLIER);
     }
 
 }

@@ -11,8 +11,8 @@ public class PriceHandler {
 
     public double getBuyPrice(MarketItem item, int amount) {
         double price = ((item.getBasePrice() * item.getPercentage()) * item.getBoughtAmount() -
-                ((item.getBasePrice() * item.getPercentage()) * item.getSoldAmount()) + item.getBasePrice()) * amount;
-        return Math.max(price, item.getMinPrice());
+                ((item.getBasePrice() * item.getPercentage()) * item.getSoldAmount()) + item.getBasePrice());
+        return Math.max(price, item.getMinPrice()) * amount;
     }
 
     public double getSellPrice(MarketItem item, int amount) {

@@ -50,10 +50,10 @@ public class MarketManager {
     /***
      * Returns the working item object
      */
-    public Optional<MarketItem> addItem(String name, double basePrice, double minPrice, double percentage) {
+    public Optional<MarketItem> addItem(String name, double basePrice, double minPrice, double impactK, double halfLifeHours) {
         if (getPersistedItem(name).isPresent()) return Optional.empty();
 
-        MarketItem item = database.addItem(name, basePrice, minPrice, percentage);
+        MarketItem item = database.addItem(name, basePrice, minPrice, impactK, halfLifeHours);
         workingItems.add(item);
         persistedItems.add(item.clone());
         return Optional.of(item);

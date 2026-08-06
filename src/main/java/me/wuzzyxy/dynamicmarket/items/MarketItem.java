@@ -5,7 +5,7 @@ public class MarketItem implements Cloneable{
 
     private final String name;
     private double basePrice;
-    private double percentage;
+    private double impactK;
     private double minPrice;
     private long boughtAmount;
     private long soldAmount;
@@ -14,13 +14,13 @@ public class MarketItem implements Cloneable{
     private long lastDecay;
     private double halfLifeHours = DEFAULT_HALF_LIFE_HOURS;
 
-    public MarketItem(String name, double basePrice, long boughtAmount, long soldAmount, double minPrice, double percentage) {
+    public MarketItem(String name, double basePrice, long boughtAmount, long soldAmount, double minPrice, double impactK) {
         this.name = name;
         this.basePrice = basePrice;
         this.boughtAmount = boughtAmount;
         this.soldAmount = soldAmount;
         this.minPrice = minPrice;
-        this.percentage = percentage;
+        this.impactK = impactK;
 
         this.net = boughtAmount - soldAmount;
         this.lastDecay = System.currentTimeMillis();
@@ -32,10 +32,6 @@ public class MarketItem implements Cloneable{
 
     public double getBasePrice() {
         return basePrice;
-    }
-
-    public double getPercentage() {
-        return percentage;
     }
 
     public double getMinPrice() {
@@ -71,11 +67,10 @@ public class MarketItem implements Cloneable{
     }
 
     /***
-     * Log-price move per net unit. Same thing as percentage for the small moves the
-     * old linear formula was tuned for, so existing configs carry over unchanged.
+     * Log-price move per net unit. ln2 / units_to_double.
      */
     public double getK() {
-        return percentage;
+        return impactK;
     }
 
     public double getHalfLifeHours() {
@@ -101,8 +96,8 @@ public class MarketItem implements Cloneable{
     public void setBasePrice(double basePrice) {
         this.basePrice = basePrice;
     }
-    public void setPercentage(double percentage) {
-        this.percentage = percentage;
+    public void setK(double impactK) {
+        this.impactK = impactK;
     }
 
     public void setMinPrice(double minPrice) {
@@ -137,7 +132,7 @@ public class MarketItem implements Cloneable{
         return "MarketItem{" +
                 "name='" + name + '\'' +
                 ", basePrice=" + basePrice +
-                ", percentage=" + percentage +
+                ", impactK=" + impactK +
                 ", minPrice=" + minPrice +
                 ", boughtAmount=" + boughtAmount +
                 ", soldAmount=" + soldAmount +

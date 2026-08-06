@@ -38,14 +38,31 @@ public class ItemConfig {
         List<MarketItem> items = new ArrayList<>();
         try {
             for (String key : Objects.requireNonNull(config.getConfigurationSection("items")).getKeys(false)) {
-                double basePrice = config.getDouble("items." + key + ".base_price");
-                double minPrice = config.getDouble("items." + key + ".min_price");
-                double percentage = config.getDouble("items." + key + ".percentage");
-                items.add(new MarketItem(key, basePrice, 0,0, minPrice, percentage));
+                String path = "items." + key + ".";
+                MarketItem item = new MarketItem(
+                        key,
+                        config.getDouble(path + "base_price"),
+                        0, 0,
+                        config.getDouble(path + "min_price"),
+                        impactK(path)
+                );
+                item.setHalfLifeHours(config.getDouble(path + "half_life_hours", MarketItem.DEFAULT_HALF_LIFE_HOURS));
+                items.add(item);
             }
         }catch (NullPointerException e) {
             plugin.getLogger().severe("Failed to load items from config");
         }
         return items;
+    }
+
+    /***
+     * units_to_double is the version a person can reason about — how many net units it
+     * takes to double the price. Configs written before the rename only have percentage,
+     * which is the same number to first order, so they carry over without editing.
+     */
+    private double impactK(String path) {
+        double unitsToDouble = config.getDouble(path + "units_to_double", 0);
+        if (unitsToDouble > 0) return Math.log(2) / unitsToDouble;
+        return config.getDouble(path + "percentage");
     }
 }

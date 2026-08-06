@@ -96,6 +96,21 @@ class PriceHandlerTest {
         assertEquals(120.0, prices.getBuyPrice(bedrock, 10), 1e-9);
     }
 
+    /***
+     * The config knob has to mean literally what it is named, otherwise nobody can tune
+     * items.yml without a calculator.
+     */
+    @Test
+    void unitsToDoubleDoublesThePrice() {
+        MarketItem cobble = new MarketItem("cobblestone", 0.6, 0, 0, 0.04, Math.log(2) / 20_000);
+        cobble.setHalfLifeHours(0);
+        double before = prices.getUnitPrice(cobble);
+
+        cobble.recordBuy(20_000);
+
+        assertEquals(2 * before, prices.getUnitPrice(cobble), 1e-9);
+    }
+
     @Test
     void netHalvesOverOneHalfLife() {
         MarketItem cobble = decayingCobblestone();

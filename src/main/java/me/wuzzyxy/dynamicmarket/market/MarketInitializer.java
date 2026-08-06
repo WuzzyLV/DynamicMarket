@@ -36,14 +36,17 @@ public class MarketInitializer {
                     if (configItem.getMinPrice() != managerItem.getMinPrice()) {
                         managerItem.setMinPrice(configItem.getMinPrice());
                     }
-                    if (configItem.getPercentage() != managerItem.getPercentage()) {
-                        managerItem.setPercentage(configItem.getPercentage());
+                    if (configItem.getK() != managerItem.getK()) {
+                        managerItem.setK(configItem.getK());
+                    }
+                    if (configItem.getHalfLifeHours() != managerItem.getHalfLifeHours()) {
+                        managerItem.setHalfLifeHours(configItem.getHalfLifeHours());
                     }
                 }
             }
             if (!found) {
                 logger.info(ChatColor.GREEN + "Adding new item: " + configItem.getName());
-                manager.addItem(configItem.getName(), configItem.getBasePrice(), configItem.getMinPrice(), configItem.getPercentage());
+                manager.addItem(configItem.getName(), configItem.getBasePrice(), configItem.getMinPrice(), configItem.getK(), configItem.getHalfLifeHours());
             }
         }
         manager.getDatabaseHandler().pushItems();

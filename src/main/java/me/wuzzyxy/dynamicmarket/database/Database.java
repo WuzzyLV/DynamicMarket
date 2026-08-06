@@ -7,10 +7,10 @@ import java.util.List;
 public interface Database {
     void die();
 
-    MarketItem addItem(String item, double basePrice, double minPrice, double percentage);
-    MarketItem addItem(String item, double basePrice, double minPrice, long boughtAmount, long soldAmount, double percentage);
-    MarketItem setItem(String item, double basePrice, double minPrice, long boughtAmount, long soldAmount, double percentage);
-    MarketItem setItemStatics(String item, double basePrice, double minPrice, double percentage);
+    MarketItem addItem(String item, double basePrice, double minPrice, double impactK, double halfLifeHours);
+    MarketItem addItem(String item, double basePrice, double minPrice, long boughtAmount, long soldAmount, double impactK, double halfLifeHours);
+    MarketItem setItem(String item, double basePrice, double minPrice, long boughtAmount, long soldAmount, double impactK, double halfLifeHours);
+    MarketItem setItemStatics(String item, double basePrice, double minPrice, double impactK);
     boolean removeItem(String item);
     MarketItem getItem(String item);
     List<MarketItem> getAllItems();

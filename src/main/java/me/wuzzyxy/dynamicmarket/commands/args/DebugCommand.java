@@ -29,25 +29,23 @@ public class DebugCommand implements ArgsCommand{
             return Optional.of(new String[]{"Item not found"});
         }
         sender.sendMessage("Item: " + persistedItem.get().getName());
-        sender.sendMessage(
-                "Working Bought/Sold "
-                + ChatColor.GREEN+workingItem.get().getBoughtAmount()
-                + ChatColor.WHITE+" / "
-                + ChatColor.RED+workingItem.get().getSoldAmount()
-        );
-        sender.sendMessage(ChatColor.translateAlternateColorCodes('&',
-                "&7Price: &a" + priceHandler.getBuyPrice(workingItem.get(), 1)));
-        sender.sendMessage("Percentage: " + workingItem.get().getPercentage());
-        sender.sendMessage(
-                "Persisted Bought/Sold "
-                        + ChatColor.GREEN+persistedItem.get().getBoughtAmount()
-                        + ChatColor.WHITE+" / "
-                        + ChatColor.RED+persistedItem.get().getSoldAmount()
-        );
-        sender.sendMessage(ChatColor.translateAlternateColorCodes('&',
-                "&7Price: &a" + priceHandler.getBuyPrice(persistedItem.get(), 1)));
-        sender.sendMessage("Percentage: " + persistedItem.get().getPercentage());
+        describe(sender, "Working", workingItem.get());
+        describe(sender, "Persisted", persistedItem.get());
         return Optional.empty();
+    }
+
+    private void describe(CommandSender sender, String label, MarketItem item) {
+        sender.sendMessage(
+                label + " Bought/Sold "
+                + ChatColor.GREEN+item.getBoughtAmount()
+                + ChatColor.WHITE+" / "
+                + ChatColor.RED+item.getSoldAmount()
+        );
+        sender.sendMessage(ChatColor.translateAlternateColorCodes('&',
+                "&7Net: &a" + String.format("%.1f", item.getNet())
+                + "&7  Unit: &a" + String.format("%.4f", priceHandler.getUnitPrice(item))
+                + "&7  Stack: &a" + String.format("%.2f", priceHandler.getBuyPrice(item, 64))));
+        sender.sendMessage("k: " + item.getK() + "  half-life: " + item.getHalfLifeHours() + "h");
 
     }
 }

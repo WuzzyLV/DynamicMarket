@@ -57,6 +57,34 @@ public class MySqlDatabase implements Database{
         }
 
         statement.executeBatch();
+        migrate();
+    }
+
+    /***
+     * items.sql is CREATE TABLE IF NOT EXISTS, so an install that already has the table
+     * never sees a column added to it. MySQL has no ADD COLUMN IF NOT EXISTS either,
+     * hence checking the catalog by hand.
+     */
+    private void migrate() throws SQLException {
+        Statement statement = getConnection().createStatement();
+        if (!hasColumn("net_position")) {
+            statement.execute("ALTER TABLE items ADD COLUMN net_position DECIMAL(20, 6) NOT NULL DEFAULT 0");
+            statement.execute("ALTER TABLE items ADD COLUMN last_decay BIGINT NOT NULL DEFAULT 0");
+            statement.execute("UPDATE items SET net_position = bought_amount - sold_amount, last_decay = "
+                    + System.currentTimeMillis());
+            logger.info("Seeded net positions from the existing bought/sold tallies");
+        }
+        // no-ops once they are already wide
+        statement.execute("ALTER TABLE items MODIFY bought_amount BIGINT DEFAULT 0");
+        statement.execute("ALTER TABLE items MODIFY sold_amount BIGINT DEFAULT 0");
+        statement.close();
+    }
+
+    private boolean hasColumn(String column) throws SQLException {
+        ResultSet columns = getConnection().getMetaData().getColumns(config.DATABASE, null, "items", column);
+        boolean present = columns.next();
+        columns.close();
+        return present;
     }
 
 
@@ -89,18 +117,20 @@ public class MySqlDatabase implements Database{
     }
 
     @Override
-    public MarketItem addItem(String item, double basePrice, double minPrice, int boughtAmount, int soldAmount, double percentage) {
+    public MarketItem addItem(String item, double basePrice, double minPrice, long boughtAmount, long soldAmount, double percentage) {
         try {
             PreparedStatement statement = getConnection().prepareStatement(
-                    "INSERT INTO items (item_name, base_price, min_price, bought_amount, sold_amount, percentage)" +
-                            " VALUES (?, ?, ?, ?, ?, ?);"
+                    "INSERT INTO items (item_name, base_price, min_price, bought_amount, sold_amount, percentage, net_position, last_decay)" +
+                            " VALUES (?, ?, ?, ?, ?, ?, ?, ?);"
             );
             statement.setString(1, item);
             statement.setDouble(2, basePrice);
             statement.setDouble(3, minPrice);
-            statement.setInt(4, boughtAmount);
-            statement.setInt(5, soldAmount);
+            statement.setLong(4, boughtAmount);
+            statement.setLong(5, soldAmount);
             statement.setDouble(6, percentage);
+            statement.setDouble(7, boughtAmount - soldAmount);
+            statement.setLong(8, System.currentTimeMillis());
             statement.execute();
             statement.close();
             return new MarketItem(item, basePrice, boughtAmount, soldAmount, minPrice, percentage);
@@ -111,15 +141,15 @@ public class MySqlDatabase implements Database{
     }
 
     @Override
-    public MarketItem setItem(String item, double basePrice, double minPrice, int boughtAmount, int soldAmount, double percentage) {
+    public MarketItem setItem(String item, double basePrice, double minPrice, long boughtAmount, long soldAmount, double percentage) {
         try {
             PreparedStatement statement = getConnection().prepareStatement(
                     "UPDATE items SET base_price = ?, min_price = ?, bought_amount = ?, sold_amount = ?, percentage = ? WHERE item_name = ?;"
             );
             statement.setDouble(1, basePrice);
             statement.setDouble(2, minPrice);
-            statement.setInt(3, boughtAmount);
-            statement.setInt(4, soldAmount);
+            statement.setLong(3, boughtAmount);
+            statement.setLong(4, soldAmount);
             statement.setDouble(5, percentage);
             statement.setString(6, item);
             statement.execute();
@@ -180,11 +210,12 @@ public class MySqlDatabase implements Database{
             MarketItem item = new MarketItem(
                     item_name,
                     resultSet.getDouble("base_price"),
-                    resultSet.getInt("bought_amount"),
-                    resultSet.getInt("sold_amount"),
+                    resultSet.getLong("bought_amount"),
+                    resultSet.getLong("sold_amount"),
                     resultSet.getDouble("min_price"),
                     resultSet.getDouble("percentage")
             );
+            item.restoreNet(resultSet.getDouble("net_position"), resultSet.getLong("last_decay"));
             statement.close();
             return item;
         } catch (SQLException throwables) {
@@ -202,14 +233,16 @@ public class MySqlDatabase implements Database{
             ResultSet resultSet = statement.getResultSet();
             ArrayList<MarketItem> items = new ArrayList<>();
             while (resultSet.next()) {
-                items.add(new MarketItem(
+                MarketItem item = new MarketItem(
                         resultSet.getString("item_name"),
                         resultSet.getDouble("base_price"),
-                        resultSet.getInt("bought_amount"),
-                        resultSet.getInt("sold_amount"),
+                        resultSet.getLong("bought_amount"),
+                        resultSet.getLong("sold_amount"),
                         resultSet.getDouble("min_price"),
                         resultSet.getDouble("percentage")
-                ));
+                );
+                item.restoreNet(resultSet.getDouble("net_position"), resultSet.getLong("last_decay"));
+                items.add(item);
             }
             statement.close();
             return items;
@@ -315,7 +348,7 @@ public class MySqlDatabase implements Database{
             );
             statement.setString(1, item.getName());
             statement.execute();
-            int boughtAmount = statement.getResultSet().getInt("bought_amount");
+            long boughtAmount = statement.getResultSet().getLong("bought_amount");
             if (boughtAmount == 0) return null;
             statement.close();
             return new MarketItem(item.getName(), item.getBasePrice(), boughtAmount, item.getSoldAmount(), item.getMinPrice(), item.getPercentage());
@@ -333,7 +366,7 @@ public class MySqlDatabase implements Database{
             );
             statement.setString(1, item.getName());
             statement.execute();
-            int soldAmount = statement.getResultSet().getInt("sold_amount");
+            long soldAmount = statement.getResultSet().getLong("sold_amount");
             if (soldAmount == 0) return null;
             statement.close();
             return new MarketItem(item.getName(), item.getBasePrice(), item.getBoughtAmount(), soldAmount, item.getMinPrice(), item.getPercentage());
@@ -378,12 +411,12 @@ public class MySqlDatabase implements Database{
     }
 
     @Override
-    public MarketItem setBoughtAmount(MarketItem item, int amount) {
+    public MarketItem setBoughtAmount(MarketItem item, long amount) {
         try {
             PreparedStatement statement = getConnection().prepareStatement(
                     "UPDATE items SET bought_amount = ? WHERE item_name = ?;"
             );
-            statement.setInt(1, amount);
+            statement.setLong(1, amount);
             statement.setString(2, item.getName());
             statement.execute();
             statement.close();
@@ -395,12 +428,12 @@ public class MySqlDatabase implements Database{
     }
 
     @Override
-    public MarketItem setSoldAmount(MarketItem item, int amount) {
+    public MarketItem setSoldAmount(MarketItem item, long amount) {
         try {
             PreparedStatement statement = getConnection().prepareStatement(
                     "UPDATE items SET sold_amount = ? WHERE item_name = ?;"
             );
-            statement.setInt(1, amount);
+            statement.setLong(1, amount);
             statement.setString(2, item.getName());
             statement.execute();
             statement.close();
@@ -412,17 +445,23 @@ public class MySqlDatabase implements Database{
     }
 
     @Override
-    public MarketItem setAmounts(MarketItem item, int boughtAmount, int soldAmount) {
+    public MarketItem setAmounts(MarketItem item, long boughtAmount, long soldAmount) {
         try {
             PreparedStatement statement = getConnection().prepareStatement(
-                    "UPDATE items SET bought_amount = ?, sold_amount = ? WHERE item_name = ?;"
+                    "UPDATE items SET bought_amount = ?, sold_amount = ?, net_position = ?, last_decay = ? WHERE item_name = ?;"
             );
-            statement.setInt(1, boughtAmount);
-            statement.setInt(2, soldAmount);
-            statement.setString(3, item.getName());
+            double net = item.getNet();
+            statement.setLong(1, boughtAmount);
+            statement.setLong(2, soldAmount);
+            statement.setDouble(3, net);
+            statement.setLong(4, item.getLastDecay());
+            statement.setString(5, item.getName());
             statement.execute();
             statement.close();
-            return new MarketItem(item.getName(), item.getBasePrice(), boughtAmount, soldAmount, item.getMinPrice(), item.getPercentage());
+
+            MarketItem written = new MarketItem(item.getName(), item.getBasePrice(), boughtAmount, soldAmount, item.getMinPrice(), item.getPercentage());
+            written.restoreNet(net, item.getLastDecay());
+            return written;
         } catch (SQLException throwables) {
             logger.warning(throwables.getMessage());
             return null;
@@ -440,8 +479,8 @@ public class MySqlDatabase implements Database{
                     "INSERT INTO item_history (item_id, bought_amount, sold_amount) VALUES (?, ?, ?);"
             );
             statement.setInt(1, getItemID(item.getName()));
-            statement.setInt(2, item.getBoughtAmount());
-            statement.setInt(3, item.getSoldAmount());
+            statement.setLong(2, item.getBoughtAmount());
+            statement.setLong(3, item.getSoldAmount());
             statement.execute();
             statement.close();
             return true;

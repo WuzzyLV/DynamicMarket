@@ -10,10 +10,24 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class PriceHandlerTest {
 
+    private static final long HALF_LIFE = 48;
+    private static final long HALF_LIFE_MILLIS = HALF_LIFE * 3_600_000L;
+
     private final PriceHandler prices = new PriceHandler(0.85);
 
+    /***
+     * Decay off, so the curve tests are about the curve and nothing else.
+     */
     private MarketItem cobblestone() {
-        return new MarketItem("cobblestone", 0.6, 0, 0, 0.04, 0.0001);
+        MarketItem cobble = new MarketItem("cobblestone", 0.6, 0, 0, 0.04, 0.0001);
+        cobble.setHalfLifeHours(0);
+        return cobble;
+    }
+
+    private MarketItem decayingCobblestone() {
+        MarketItem cobble = new MarketItem("cobblestone", 0.6, 0, 0, 0.04, 0.0001);
+        cobble.setHalfLifeHours(HALF_LIFE);
+        return cobble;
     }
 
     /***
@@ -33,17 +47,17 @@ class PriceHandlerTest {
                 int amount = 1 + rng.nextInt(2000);
                 if (rng.nextBoolean()) {
                     cash -= prices.getBuyPrice(cobble, amount);
-                    cobble.setBoughtAmount(cobble.getBoughtAmount() + amount);
+                    cobble.recordBuy(amount);
                     held += amount;
                 } else if (held >= amount) {
                     cash += prices.getSellPrice(cobble, amount);
-                    cobble.setSoldAmount(cobble.getSoldAmount() + amount);
+                    cobble.recordSell(amount);
                     held -= amount;
                 }
             }
             if (held > 0) {
                 cash += prices.getSellPrice(cobble, held);
-                cobble.setSoldAmount(cobble.getSoldAmount() + held);
+                cobble.recordSell(held);
             }
 
             assertTrue(cash < 1e-6, "made " + cash + " out of nothing, seed " + seed);
@@ -58,7 +72,7 @@ class PriceHandlerTest {
         double stackByStack = 0;
         for (int stack = 0; stack < 27; stack++) {
             stackByStack += prices.getBuyPrice(cobble, 64);
-            cobble.setBoughtAmount(cobble.getBoughtAmount() + 64);
+            cobble.recordBuy(64);
         }
 
         assertEquals(atOnce, stackByStack, 1e-9);
@@ -68,16 +82,63 @@ class PriceHandlerTest {
     void sellingBackWhatYouJustBoughtLosesExactlyTheSpread() {
         MarketItem cobble = cobblestone();
         double paid = prices.getBuyPrice(cobble, 10_000);
-        cobble.setBoughtAmount(10_000);
+        cobble.recordBuy(10_000);
 
         assertEquals(0.85, prices.getSellPrice(cobble, 10_000) / paid, 1e-9);
     }
 
     @Test
     void itemsWithNoImpactStayAtBasePrice() {
-        MarketItem fixed = new MarketItem("bedrock", 12.0, 0, 0, 12.0, 0);
-        fixed.setBoughtAmount(50_000);
+        MarketItem bedrock = new MarketItem("bedrock", 12.0, 0, 0, 12.0, 0);
+        bedrock.setHalfLifeHours(0);
+        bedrock.recordBuy(50_000);
 
-        assertEquals(120.0, prices.getBuyPrice(fixed, 10), 1e-9);
+        assertEquals(120.0, prices.getBuyPrice(bedrock, 10), 1e-9);
+    }
+
+    @Test
+    void netHalvesOverOneHalfLife() {
+        MarketItem cobble = decayingCobblestone();
+        cobble.restoreNet(10_000, System.currentTimeMillis() - HALF_LIFE_MILLIS);
+
+        assertEquals(5_000, cobble.getNet(), 1.0);
+    }
+
+    /***
+     * Decay heals a crash, which is the point, but it must not hand the person who
+     * caused the crash a cheap way back in. Recovery moves the price against them.
+     */
+    @Test
+    void sittingOutTheRecoveryDoesNotPayForCrashingIt() {
+        MarketItem cobble = decayingCobblestone();
+        double revenue = prices.getSellPrice(cobble, 20_000);
+        cobble.recordSell(20_000);
+
+        cobble.restoreNet(cobble.getNet(), System.currentTimeMillis() - HALF_LIFE_MILLIS);
+
+        assertTrue(prices.getBuyPrice(cobble, 20_000) > revenue);
+    }
+
+    @Test
+    void ridingTheDecayAfterBuyingDoesNotPayEither() {
+        MarketItem cobble = decayingCobblestone();
+        double paid = prices.getBuyPrice(cobble, 20_000);
+        cobble.recordBuy(20_000);
+
+        cobble.restoreNet(cobble.getNet(), System.currentTimeMillis() - HALF_LIFE_MILLIS);
+
+        assertTrue(prices.getSellPrice(cobble, 20_000) < paid);
+    }
+
+    /***
+     * A row written before the decay columns existed comes back with last_decay 0.
+     * Decaying from 1970 would silently wipe the position.
+     */
+    @Test
+    void rowsFromBeforeTheMigrationKeepTheirPosition() {
+        MarketItem cobble = decayingCobblestone();
+        cobble.restoreNet(8_000, 0);
+
+        assertEquals(8_000, cobble.getNet(), 1e-6);
     }
 }

@@ -52,13 +52,13 @@ public class BuySellCommand implements ArgsCommand{
      */
     private Optional<String[]> buy(MarketItem item, int amount) {
         double price = manager.getPriceHandler().getBuyPrice(item, amount);
-        item.setBoughtAmount(item.getBoughtAmount() + amount);
+        item.recordBuy(amount);
         return Optional.of(new String[]{df.format(price)});
     }
 
     private Optional<String[]> sell(MarketItem item, int amount) {
         double price = manager.getPriceHandler().getSellPrice(item, amount);
-        item.setSoldAmount(item.getSoldAmount() + amount);
+        item.recordSell(amount);
         return Optional.of(new String[]{df.format(price)});
     }
 }

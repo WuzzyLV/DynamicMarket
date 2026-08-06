@@ -8,8 +8,8 @@ public interface Database {
     void die();
 
     MarketItem addItem(String item, double basePrice, double minPrice, double percentage);
-    MarketItem addItem(String item, double basePrice, double minPrice, int boughtAmount, int soldAmount, double percentage);
-    MarketItem setItem(String item, double basePrice, double minPrice, int boughtAmount, int soldAmount, double percentage);
+    MarketItem addItem(String item, double basePrice, double minPrice, long boughtAmount, long soldAmount, double percentage);
+    MarketItem setItem(String item, double basePrice, double minPrice, long boughtAmount, long soldAmount, double percentage);
     MarketItem setItemStatics(String item, double basePrice, double minPrice, double percentage);
     boolean removeItem(String item);
     MarketItem getItem(String item);
@@ -24,9 +24,9 @@ public interface Database {
     MarketItem getSoldAmount(MarketItem item);
     MarketItem addBoughtAmount(MarketItem item, int amount);
     MarketItem addSoldAmount(MarketItem item, int amount);
-    MarketItem setBoughtAmount(MarketItem item, int amount);
-    MarketItem setSoldAmount(MarketItem item, int amount);
-    MarketItem setAmounts(MarketItem item, int boughtAmount, int soldAmount);
+    MarketItem setBoughtAmount(MarketItem item, long amount);
+    MarketItem setSoldAmount(MarketItem item, long amount);
+    MarketItem setAmounts(MarketItem item, long boughtAmount, long soldAmount);
 
     @Deprecated
     boolean createHistoryPoint(MarketItem item);

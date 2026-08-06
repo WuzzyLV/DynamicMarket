@@ -41,6 +41,21 @@ public class MarketItem implements Cloneable{
         return soldAmount;
     }
 
+    /***
+     * Net units the market is long. Everything about the price is a function of this.
+     */
+    public double getNet() {
+        return boughtAmount - soldAmount;
+    }
+
+    /***
+     * Log-price move per net unit. Same thing as percentage for the small moves the
+     * old linear formula was tuned for, so existing configs carry over unchanged.
+     */
+    public double getK() {
+        return percentage;
+    }
+
     public void setBasePrice(double basePrice) {
         this.basePrice = basePrice;
     }

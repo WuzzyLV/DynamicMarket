@@ -47,7 +47,7 @@ public class SellPriceExpansion extends PlaceholderExpansion {
 
         if (args.length != 2) return "DMSellPrice_Item,Amount" + args.length + " args provided";
 
-        MarketItem item = manager.getPersistedItem(args[0]).orElse(null);
+        MarketItem item = manager.getWorkingItem(args[0]).orElse(null);
         if (item == null) return args[0]+ " not found";
 
         try {

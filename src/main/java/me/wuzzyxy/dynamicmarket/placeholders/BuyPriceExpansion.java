@@ -48,7 +48,7 @@ public class BuyPriceExpansion extends PlaceholderExpansion {
 
         if (args.length != 2) return "DMBuyPrice_Item,Amount" + args.length + " args provided";
 
-        MarketItem item = manager.getPersistedItem(args[0]).orElse(null);
+        MarketItem item = manager.getWorkingItem(args[0]).orElse(null);
         if (item == null) return args[0]+ " not found";
 
         try {

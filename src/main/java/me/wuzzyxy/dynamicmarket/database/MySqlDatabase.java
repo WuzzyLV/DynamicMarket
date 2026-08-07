@@ -116,6 +116,9 @@ public class MySqlDatabase implements Database{
 
         statement.executeBatch();
         migrate();
+
+        statement.execute("DROP TRIGGER IF EXISTS update_item_history");
+        statement.execute(plugin.getTriggerScript());
     }
 
     /***
@@ -125,28 +128,56 @@ public class MySqlDatabase implements Database{
      */
     private void migrate() throws SQLException {
         Statement statement = getConnection().createStatement();
-        if (!hasColumn("net_position")) {
+        if (!hasColumn("items", "net_position")) {
             statement.execute("ALTER TABLE items ADD COLUMN net_position DECIMAL(20, 6) NOT NULL DEFAULT 0");
             statement.execute("ALTER TABLE items ADD COLUMN last_decay BIGINT NOT NULL DEFAULT 0");
             statement.execute("UPDATE items SET net_position = bought_amount - sold_amount, last_decay = "
                     + System.currentTimeMillis());
             logger.info("Seeded net positions from the existing bought/sold tallies");
         }
-        if (hasColumn("percentage")) {
+        if (hasColumn("items", "percentage")) {
             statement.execute("ALTER TABLE items CHANGE percentage impact_k DECIMAL(20, 18) NOT NULL");
             logger.info("Renamed items.percentage to items.impact_k");
         }
-        if (!hasColumn("half_life_hours")) {
+        if (!hasColumn("items", "half_life_hours")) {
             statement.execute("ALTER TABLE items ADD COLUMN half_life_hours DECIMAL(10, 2) NOT NULL DEFAULT 48");
         }
         // no-ops once they are already wide
         statement.execute("ALTER TABLE items MODIFY bought_amount BIGINT DEFAULT 0");
         statement.execute("ALTER TABLE items MODIFY sold_amount BIGINT DEFAULT 0");
+
+        // history recorded tallies only, which stopped determining the price when the
+        // curve went exponential and net started decaying. Charts need the price itself.
+        if (!hasColumn("item_history", "unit_price")) {
+            statement.execute("ALTER TABLE item_history ADD COLUMN net_position DECIMAL(20, 6) NOT NULL DEFAULT 0");
+            statement.execute("ALTER TABLE item_history ADD COLUMN unit_price DECIMAL(20, 6) NOT NULL DEFAULT 0");
+            logger.info("Added price columns to item_history; rows written before now have none");
+        }
+        statement.execute("ALTER TABLE item_history MODIFY bought_amount BIGINT");
+        statement.execute("ALTER TABLE item_history MODIFY sold_amount BIGINT");
+        if (!hasIndex("item_history", "idx_item_time")) {
+            statement.execute("ALTER TABLE item_history ADD INDEX idx_item_time (item_id, change_date)");
+        }
+        if (!hasIndex("item_history", "idx_time")) {
+            statement.execute("ALTER TABLE item_history ADD INDEX idx_time (change_date)");
+        }
         statement.close();
     }
 
-    private boolean hasColumn(String column) throws SQLException {
-        ResultSet columns = getConnection().getMetaData().getColumns(config.DATABASE, null, "items", column);
+    private boolean hasIndex(String table, String index) throws SQLException {
+        ResultSet indexes = getConnection().getMetaData().getIndexInfo(config.DATABASE, null, table, false, false);
+        while (indexes.next()) {
+            if (index.equalsIgnoreCase(indexes.getString("INDEX_NAME"))) {
+                indexes.close();
+                return true;
+            }
+        }
+        indexes.close();
+        return false;
+    }
+
+    private boolean hasColumn(String table, String column) throws SQLException {
+        ResultSet columns = getConnection().getMetaData().getColumns(config.DATABASE, null, table, column);
         boolean present = columns.next();
         columns.close();
         return present;
@@ -551,6 +582,45 @@ public class MySqlDatabase implements Database{
         } catch (SQLException throwables) {
             logger.warning(throwables.getMessage());
             return null;
+        }
+    }
+
+    /***
+     * A price point per item on a timer, whether or not anyone traded. The trigger only
+     * fires on trades, so a quiet item would have no points at all — even though its
+     * price has been moving the whole time as net decays back toward base.
+     */
+    @Override
+    public boolean snapshotHistory() {
+        try {
+            Statement statement = getConnection().createStatement();
+            statement.execute(
+                    "INSERT INTO item_history (item_id, bought_amount, sold_amount, net_position, unit_price) " +
+                    "SELECT item_id, bought_amount, sold_amount, net_position, base_price * EXP(impact_k * net_position) " +
+                    "FROM items"
+            );
+            statement.close();
+            return true;
+        } catch (SQLException throwables) {
+            logger.warning(throwables.getMessage());
+            return false;
+        }
+    }
+
+    @Override
+    public int pruneHistory(int retentionDays) {
+        if (retentionDays <= 0) return 0;
+        try {
+            PreparedStatement statement = getConnection().prepareStatement(
+                    "DELETE FROM item_history WHERE change_date < DATE_SUB(NOW(), INTERVAL ? DAY);"
+            );
+            statement.setInt(1, retentionDays);
+            int removed = statement.executeUpdate();
+            statement.close();
+            return removed;
+        } catch (SQLException throwables) {
+            logger.warning(throwables.getMessage());
+            return 0;
         }
     }
 

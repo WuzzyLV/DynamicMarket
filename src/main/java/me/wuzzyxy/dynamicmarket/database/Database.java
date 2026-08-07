@@ -28,6 +28,9 @@ public interface Database {
     MarketItem setSoldAmount(MarketItem item, long amount);
     MarketItem setAmounts(MarketItem item, long boughtAmount, long soldAmount);
 
+    boolean snapshotHistory();
+    int pruneHistory(int retentionDays);
+
     @Deprecated
     boolean createHistoryPoint(MarketItem item);
 

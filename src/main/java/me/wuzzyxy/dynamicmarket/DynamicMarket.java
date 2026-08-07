@@ -73,10 +73,16 @@ public final class DynamicMarket extends JavaPlugin {
         stream = getClass().getClassLoader().getResourceAsStream("sql/item_history.sql");
         scripts.add(new String(stream.readAllBytes()));
 
-        stream = getClass().getClassLoader().getResourceAsStream("sql/item_history_trigger.sql");
-        scripts.add(new String(stream.readAllBytes()));
-
         return scripts;
+    }
+
+    /***
+     * Kept apart from the table scripts because the trigger is dropped and recreated on
+     * every boot. CREATE TRIGGER IF NOT EXISTS would leave an old body in place forever.
+     */
+    public String getTriggerScript() throws IOException {
+        InputStream stream = getClass().getClassLoader().getResourceAsStream("sql/item_history_trigger.sql");
+        return new String(stream.readAllBytes());
     }
 
     public PluginConfig getPluginConfig() {

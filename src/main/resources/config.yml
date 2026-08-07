@@ -12,8 +12,17 @@ mysql:
   # Ceiling on any single query. Also bounds the push task, which runs on the main thread.
   socket_timeout_ms: 15000
 
-#  Seconds
+#  Seconds. Only controls how often working state is flushed to MySQL — prices are read
+#  live, so this no longer affects what anyone is quoted.
 push_interval: 10
+
+history:
+  # A price point per item on this cadence whether or not anyone traded. Trades write
+  # their own points; this fills the gaps so a quiet item still has a chart and the 24h
+  # comparison has something to read.
+  snapshot_minutes: 30
+  # 0 keeps everything forever.
+  retention_days: 90
 # Fraction of the buy price you get back when selling. This used to be the only thing
 # standing between the market and a round-trip profit, and it was not enough. Pricing
 # along the curve handles that now, so the spread is free to be something players will

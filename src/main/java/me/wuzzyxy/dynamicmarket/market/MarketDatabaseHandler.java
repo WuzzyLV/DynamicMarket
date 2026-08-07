@@ -22,6 +22,7 @@ public class MarketDatabaseHandler {
         this.plugin = plugin;
 
         starRepeatingTask();
+        startSnapshotTask();
     }
 
     public void pushItems() {
@@ -39,5 +40,15 @@ public class MarketDatabaseHandler {
                 this::pushItems,
                 0, plugin.getPluginConfig().PUSH_INTERVAL * 20L
         );
+    }
+
+    private void startSnapshotTask() {
+        long ticks = plugin.getPluginConfig().HISTORY_SNAPSHOT_MINUTES * 60L * 20L;
+        if (ticks <= 0) return;
+
+        Bukkit.getServer().getScheduler().scheduleSyncRepeatingTask(plugin, () -> {
+            database.snapshotHistory();
+            database.pruneHistory(plugin.getPluginConfig().HISTORY_RETENTION_DAYS);
+        }, ticks, ticks);
     }
 }

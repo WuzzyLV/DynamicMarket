@@ -15,10 +15,14 @@ public class PluginConfig {
         PUSH_INTERVAL = plugin.getConfig().getInt("push_interval");
         SELL_MULTIPLIER = plugin.getConfig().getDouble("sell_multiplier");
 
+        HISTORY_SNAPSHOT_MINUTES = plugin.getConfig().getInt("history.snapshot_minutes", 30);
+        HISTORY_RETENTION_DAYS = plugin.getConfig().getInt("history.retention_days", 90);
     }
 
     public final int PUSH_INTERVAL;
     public final double SELL_MULTIPLIER;
+    public final int HISTORY_SNAPSHOT_MINUTES;
+    public final int HISTORY_RETENTION_DAYS;
     public final String HOST;
     public final int PORT;
     public final String DATABASE;

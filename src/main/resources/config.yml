@@ -6,6 +6,11 @@ mysql:
   database: test
   username: root
   password: root
+  # The driver waits forever by default. We connect during startup on the main thread, so an
+  # unreachable host would hang the whole server instead of just failing the plugin.
+  connect_timeout_ms: 5000
+  # Ceiling on any single query. Also bounds the push task, which runs on the main thread.
+  socket_timeout_ms: 15000
 
 #  Seconds
 push_interval: 10

@@ -45,7 +45,65 @@ public class MySqlDatabase implements Database{
         dataSource.setDatabaseName(config.DATABASE);
         dataSource.setUser(config.USERNAME);
         dataSource.setPassword(config.PASSWORD);
-        return connection = dataSource.getConnection();
+        // Connector/J defaults both of these to 0, which means "wait forever". We connect from
+        // onEnable on the main thread, so a host that swallows packets instead of refusing them
+        // wedges the entire server boot rather than failing the plugin.
+        dataSource.setConnectTimeout(config.CONNECT_TIMEOUT_MS);
+        dataSource.setSocketTimeout(config.SOCKET_TIMEOUT_MS);
+
+        logger.info("Connecting to " + config.HOST + ":" + config.PORT + "/" + config.DATABASE
+                + " as " + config.USERNAME + ", giving up after " + config.CONNECT_TIMEOUT_MS + "ms");
+
+        long start = System.currentTimeMillis();
+        try {
+            connection = dataSource.getConnection();
+        } catch (SQLException throwables) {
+            logger.severe("Gave up after " + (System.currentTimeMillis() - start) + "ms"
+                    + " (SQLState " + throwables.getSQLState() + ", vendor code " + throwables.getErrorCode() + "): "
+                    + throwables.getMessage());
+            logger.severe(diagnose(throwables));
+            throw throwables;
+        }
+        logger.info("Connected in " + (System.currentTimeMillis() - start) + "ms");
+        return connection;
+    }
+
+    /***
+     * The driver folds every network problem into one CommunicationsException, so the stack trace
+     * alone never says whether the host is wrong, the port is closed, or the credentials are.
+     */
+    private String diagnose(SQLException throwables) {
+        String sqlState = throwables.getSQLState() == null ? "" : throwables.getSQLState();
+        switch (sqlState) {
+            case "28000":
+                return "Wrong username or password for '" + config.USERNAME + "'.";
+            case "42000":
+                return "Connected, but database '" + config.DATABASE + "' does not exist or the user cannot see it.";
+            case "08S01":
+                break;
+            default:
+                return "Check mysql.* in config.yml.";
+        }
+        if (hasCause(throwables, java.net.ConnectException.class)) {
+            return "Refused: something answered at " + config.HOST + ":" + config.PORT + " but nothing is listening."
+                    + " Is mysqld running, and is the port right?";
+        }
+        if (hasCause(throwables, java.net.SocketTimeoutException.class)) {
+            return "Timed out with no reply from " + config.HOST + ":" + config.PORT + "."
+                    + " Packets are being dropped - firewall, wrong host, or a container/VPN that cannot route there."
+                    + " Note 'localhost' means this server's own box, not the machine you run mysql on.";
+        }
+        if (hasCause(throwables, java.net.UnknownHostException.class)) {
+            return "Hostname '" + config.HOST + "' does not resolve.";
+        }
+        return "Network-level failure reaching " + config.HOST + ":" + config.PORT + ".";
+    }
+
+    private static boolean hasCause(Throwable throwable, Class<? extends Throwable> type) {
+        for (Throwable cause = throwable; cause != null; cause = cause.getCause()) {
+            if (type.isInstance(cause)) return true;
+        }
+        return false;
     }
 
     private void initializeDatabase() throws SQLException, IOException {

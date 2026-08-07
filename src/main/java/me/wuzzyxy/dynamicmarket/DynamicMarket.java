@@ -37,10 +37,12 @@ public final class DynamicMarket extends JavaPlugin {
             this.getLogger().severe("Failed to initialize Database!");
             e.printStackTrace();
             getServer().getPluginManager().disablePlugin(this);
+            return;
         }catch (IOException e) {
             this.getLogger().severe("Failed to load SQL scripts!");
             e.printStackTrace();
             getServer().getPluginManager().disablePlugin(this);
+            return;
         }
 
         marketManager = new MarketManager(this, database);

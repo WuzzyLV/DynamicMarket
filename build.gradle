@@ -21,8 +21,8 @@ repositories {
 }
 
 dependencies {
-    compileOnly "org.spigotmc:spigot-api:1.16.5-R0.1-SNAPSHOT"
-    compileOnly 'me.clip:placeholderapi:2.11.5'
+    compileOnly "org.spigotmc:spigot-api:26.2-R0.1-SNAPSHOT"
+    compileOnly 'me.clip:placeholderapi:2.12.3'
     // https://mvnrepository.com/artifact/com.mysql/mysql-connector-j
     implementation 'com.mysql:mysql-connector-j:8.3.0'
 

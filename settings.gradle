@@ -1,1 +1,7 @@
+// Paper 26.2 is built for Java 25, so let Gradle fetch that toolchain rather than
+// making everyone install it by hand.
+plugins {
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '0.8.0'
+}
+
 rootProject.name = 'DynamicMarket'

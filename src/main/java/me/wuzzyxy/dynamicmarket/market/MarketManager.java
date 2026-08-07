@@ -3,6 +3,7 @@ package me.wuzzyxy.dynamicmarket.market;
 import me.wuzzyxy.dynamicmarket.DynamicMarket;
 import me.wuzzyxy.dynamicmarket.database.Database;
 import me.wuzzyxy.dynamicmarket.items.MarketItem;
+import org.bukkit.Bukkit;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,6 +17,7 @@ public class MarketManager {
     private final MarketInitializer initializer;
     private final MarketDatabaseHandler databaseHandler;
     private final PriceHandler priceHandler;
+    private final MarketReport report;
 
     private final List<MarketItem> workingItems;
     private final List<MarketItem> persistedItems;
@@ -40,7 +42,10 @@ public class MarketManager {
         this.databaseHandler = new MarketDatabaseHandler(this, database, plugin);
         this.initializer = new MarketInitializer(plugin.getItemConfig(), this, plugin.getLogger());
         this.priceHandler = new PriceHandler(plugin.getPluginConfig().SELL_MULTIPLIER);
+        this.report = new MarketReport(plugin.getPluginConfig().reportSettings(), this::getWorkingItems, database, priceHandler);
 
+        long reportTicks = Math.max(1, plugin.getPluginConfig().REPORT_REFRESH_SECONDS) * 20L;
+        Bukkit.getServer().getScheduler().scheduleSyncRepeatingTask(plugin, report::refresh, reportTicks, reportTicks);
     }
 
     private List<MarketItem> getAllDBItems() {
@@ -50,10 +55,10 @@ public class MarketManager {
     /***
      * Returns the working item object
      */
-    public Optional<MarketItem> addItem(String name, double basePrice, double minPrice, double impactK, double halfLifeHours) {
-        if (getPersistedItem(name).isPresent()) return Optional.empty();
+    public Optional<MarketItem> addItem(MarketItem definition) {
+        if (getPersistedItem(definition.getName()).isPresent()) return Optional.empty();
 
-        MarketItem item = database.addItem(name, basePrice, minPrice, impactK, halfLifeHours);
+        MarketItem item = database.addItem(definition);
         workingItems.add(item);
         persistedItems.add(item.clone());
         return Optional.of(item);
@@ -111,5 +116,9 @@ public class MarketManager {
 
     public PriceHandler getPriceHandler() {
         return priceHandler;
+    }
+
+    public MarketReport getReport() {
+        return report;
     }
 }

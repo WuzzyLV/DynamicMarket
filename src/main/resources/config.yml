@@ -23,6 +23,22 @@ history:
   snapshot_minutes: 30
   # 0 keeps everything forever.
   retention_days: 90
+
+report:
+  # Movers are recomputed on this cadence, and every placeholder serves off that snapshot.
+  # DeluxeMenus resolves placeholders per slot per refresh, so they must never hit MySQL.
+  refresh_seconds: 60
+  window_hours: 24
+  # Moves smaller than this count as flat, so noise does not top the board.
+  min_change_percent: 0.1
+  # MiniMessage. <item> and <change> are filled in; <change> is already signed when negative.
+  mover_up: "<green>▲ <white><item> <green>+<change>%"
+  mover_down: "<red>▼ <white><item> <red><change>%"
+  trend_up: "<green>▲"
+  trend_down: "<red>▼"
+  trend_flat: "<gray>-"
+  # Shown when there is no Nth mover. Leave blank to hide the line via a DeluxeMenus requirement.
+  empty: ""
 # Fraction of the buy price you get back when selling. This used to be the only thing
 # standing between the market and a round-trip profit, and it was not enough. Pricing
 # along the curve handles that now, so the spread is free to be something players will

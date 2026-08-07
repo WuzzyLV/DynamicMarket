@@ -10,6 +10,8 @@ public class MarketItem implements Cloneable{
     private long boughtAmount;
     private long soldAmount;
 
+    private String category = "misc";
+
     private double net;
     private long lastDecay;
     private double halfLifeHours = DEFAULT_HALF_LIFE_HOURS;
@@ -75,6 +77,14 @@ public class MarketItem implements Cloneable{
 
     public double getHalfLifeHours() {
         return halfLifeHours;
+    }
+
+    public String getCategory() {
+        return category;
+    }
+
+    public void setCategory(String category) {
+        this.category = category == null || category.isBlank() ? "misc" : category;
     }
 
     public long getLastDecay() {

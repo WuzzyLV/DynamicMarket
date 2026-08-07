@@ -42,11 +42,14 @@ public class MarketInitializer {
                     if (configItem.getHalfLifeHours() != managerItem.getHalfLifeHours()) {
                         managerItem.setHalfLifeHours(configItem.getHalfLifeHours());
                     }
+                    if (!configItem.getCategory().equals(managerItem.getCategory())) {
+                        managerItem.setCategory(configItem.getCategory());
+                    }
                 }
             }
             if (!found) {
                 logger.info(ChatColor.GREEN + "Adding new item: " + configItem.getName());
-                manager.addItem(configItem.getName(), configItem.getBasePrice(), configItem.getMinPrice(), configItem.getK(), configItem.getHalfLifeHours());
+                manager.addItem(configItem);
             }
         }
         manager.getDatabaseHandler().pushItems();

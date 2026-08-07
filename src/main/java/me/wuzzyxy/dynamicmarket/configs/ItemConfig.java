@@ -47,6 +47,7 @@ public class ItemConfig {
                         impactK(path)
                 );
                 item.setHalfLifeHours(config.getDouble(path + "half_life_hours", MarketItem.DEFAULT_HALF_LIFE_HOURS));
+                item.setCategory(config.getString(path + "category", "misc"));
                 items.add(item);
             }
         }catch (NullPointerException e) {

@@ -29,6 +29,9 @@ dependencies {
     testImplementation platform('org.junit:junit-bom:5.10.2')
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    // paper-api is compileOnly, so the report tests need adventure on their own
+    testImplementation 'net.kyori:adventure-text-minimessage:5.2.0'
+    testImplementation 'net.kyori:adventure-text-serializer-legacy:5.2.0'
 }
 
 test {

@@ -11,31 +11,37 @@ items:
   # bulk terrain, farmable by the shulker
   cobblestone:
     base_price: 0.6
+    category: terrain
     units_to_double: 40000
     half_life_hours: 36
     min_price: 0.04
   stone:
     base_price: 1
+    category: terrain
     units_to_double: 40000
     half_life_hours: 36
     min_price: 0.06
   cobbled_deepslate:
     base_price: 0.5
+    category: terrain
     units_to_double: 40000
     half_life_hours: 36
     min_price: 0.03
   dirt:
     base_price: 0.5
+    category: terrain
     units_to_double: 30000
     half_life_hours: 36
     min_price: 0.03
   sand:
     base_price: 0.5
+    category: terrain
     units_to_double: 30000
     half_life_hours: 36
     min_price: 0.03
   gravel:
     base_price: 1
+    category: terrain
     units_to_double: 30000
     half_life_hours: 36
     min_price: 0.06
@@ -43,56 +49,67 @@ items:
   # hand-gathered stone and soil
   granite:
     base_price: 0.75
+    category: stone
     units_to_double: 15000
     half_life_hours: 48
     min_price: 0.05
   diorite:
     base_price: 0.75
+    category: stone
     units_to_double: 15000
     half_life_hours: 48
     min_price: 0.05
   andesite:
     base_price: 0.75
+    category: stone
     units_to_double: 15000
     half_life_hours: 48
     min_price: 0.05
   tuff:
     base_price: 0.75
+    category: stone
     units_to_double: 15000
     half_life_hours: 48
     min_price: 0.05
   calcite:
     base_price: 1.5
+    category: stone
     units_to_double: 12000
     half_life_hours: 48
     min_price: 0.1
   sandstone:
     base_price: 0.5
+    category: stone
     units_to_double: 20000
     half_life_hours: 48
     min_price: 0.03
   red_sand:
     base_price: 0.5
+    category: stone
     units_to_double: 12000
     half_life_hours: 48
     min_price: 0.03
   clay:
     base_price: 6
+    category: soil
     units_to_double: 10000
     half_life_hours: 48
     min_price: 0.08
   terracotta:
     base_price: 1
+    category: stone
     units_to_double: 15000
     half_life_hours: 48
     min_price: 0.06
   grass_block:
     base_price: 1
+    category: soil
     units_to_double: 12000
     half_life_hours: 48
     min_price: 0.06
   podzol:
     base_price: 1.5
+    category: soil
     units_to_double: 8000
     half_life_hours: 60
     min_price: 0.1
@@ -100,41 +117,49 @@ items:
   # tree farms
   oak_log:
     base_price: 4
+    category: wood
     units_to_double: 8000
     half_life_hours: 48
     min_price: 0.5
   spruce_log:
     base_price: 4
+    category: wood
     units_to_double: 8000
     half_life_hours: 48
     min_price: 0.5
   birch_log:
     base_price: 4
+    category: wood
     units_to_double: 8000
     half_life_hours: 48
     min_price: 0.5
   jungle_log:
     base_price: 4
+    category: wood
     units_to_double: 8000
     half_life_hours: 48
     min_price: 0.5
   acacia_log:
     base_price: 4
+    category: wood
     units_to_double: 8000
     half_life_hours: 48
     min_price: 0.5
   dark_oak_log:
     base_price: 4
+    category: wood
     units_to_double: 8000
     half_life_hours: 48
     min_price: 0.5
   crimson_stem:
     base_price: 5
+    category: wood
     units_to_double: 6000
     half_life_hours: 60
     min_price: 0.5
   warped_stem:
     base_price: 5
+    category: wood
     units_to_double: 6000
     half_life_hours: 60
     min_price: 0.5
@@ -142,36 +167,43 @@ items:
   # dyes move in stacks, not shulkers
   white_dye:
     base_price: 2
+    category: dyes
     units_to_double: 3000
     half_life_hours: 72
     min_price: 0.05
   black_dye:
     base_price: 2
+    category: dyes
     units_to_double: 3000
     half_life_hours: 72
     min_price: 0.2
   red_dye:
     base_price: 2
+    category: dyes
     units_to_double: 2000
     half_life_hours: 72
     min_price: 0.2
   blue_dye:
     base_price: 2
+    category: dyes
     units_to_double: 2000
     half_life_hours: 72
     min_price: 0.2
   yellow_dye:
     base_price: 2
+    category: dyes
     units_to_double: 2000
     half_life_hours: 72
     min_price: 0.2
   green_dye:
     base_price: 2
+    category: dyes
     units_to_double: 1500
     half_life_hours: 72
     min_price: 0.2
   brown_dye:
     base_price: 2
+    category: dyes
     units_to_double: 3000
     half_life_hours: 72
     min_price: 0.2

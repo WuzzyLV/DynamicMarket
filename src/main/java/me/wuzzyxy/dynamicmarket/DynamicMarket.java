@@ -7,7 +7,9 @@ import me.wuzzyxy.dynamicmarket.database.Database;
 import me.wuzzyxy.dynamicmarket.database.MySqlDatabase;
 import me.wuzzyxy.dynamicmarket.items.MarketItem;
 import me.wuzzyxy.dynamicmarket.market.MarketManager;
+import me.wuzzyxy.dynamicmarket.market.MarketReport;
 import me.wuzzyxy.dynamicmarket.placeholders.BuyPriceExpansion;
+import me.wuzzyxy.dynamicmarket.placeholders.MarketExpansion;
 import me.wuzzyxy.dynamicmarket.placeholders.SellPriceExpansion;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -54,6 +56,13 @@ public final class DynamicMarket extends JavaPlugin {
         if (getServer().getPluginManager().getPlugin("PlaceholderAPI") != null) {
             new BuyPriceExpansion(this, marketManager, marketManager.getPriceHandler()).register();
             new SellPriceExpansion(this, marketManager, marketManager.getPriceHandler()).register();
+
+            MarketReport report = marketManager.getReport();
+            new MarketExpansion(this, "DMMover", report::moverLine).register();
+            new MarketExpansion(this, "DMMoverItem", report::moverItem).register();
+            new MarketExpansion(this, "DMMoverChange", report::moverChange).register();
+            new MarketExpansion(this, "DMChange", report::itemChange).register();
+            new MarketExpansion(this, "DMTrend", report::itemTrend).register();
         }
 
     }

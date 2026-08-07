@@ -8,7 +8,9 @@ import me.wuzzyxy.dynamicmarket.configs.PluginConfig;
 import java.io.IOException;
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 
 @SuppressWarnings("ALL")
@@ -142,6 +144,9 @@ public class MySqlDatabase implements Database{
         if (!hasColumn("items", "half_life_hours")) {
             statement.execute("ALTER TABLE items ADD COLUMN half_life_hours DECIMAL(10, 2) NOT NULL DEFAULT 48");
         }
+        if (!hasColumn("items", "category")) {
+            statement.execute("ALTER TABLE items ADD COLUMN category VARCHAR(64) NOT NULL DEFAULT 'misc'");
+        }
         // no-ops once they are already wide
         statement.execute("ALTER TABLE items MODIFY bought_amount BIGINT DEFAULT 0");
         statement.execute("ALTER TABLE items MODIFY sold_amount BIGINT DEFAULT 0");
@@ -194,22 +199,27 @@ public class MySqlDatabase implements Database{
     }
 
     @Override
-    public MarketItem addItem(String item, double basePrice, double minPrice, double impactK, double halfLifeHours) {
+    public MarketItem addItem(MarketItem item) {
         try {
             PreparedStatement statement = getConnection().prepareStatement(
-                    "INSERT INTO items (item_name, base_price, min_price, impact_k, half_life_hours) VALUES (?, ?, ?, ?, ?);"
+                    "INSERT INTO items (item_name, base_price, min_price, impact_k, half_life_hours, category," +
+                            " bought_amount, sold_amount, net_position, last_decay)" +
+                            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"
             );
-            statement.setString(1, item);
-            statement.setDouble(2, basePrice);
-            statement.setDouble(3, minPrice);
-            statement.setDouble(4, impactK);
-            statement.setDouble(5, halfLifeHours);
+            double net = item.getNet();
+            statement.setString(1, item.getName());
+            statement.setDouble(2, item.getBasePrice());
+            statement.setDouble(3, item.getMinPrice());
+            statement.setDouble(4, item.getK());
+            statement.setDouble(5, item.getHalfLifeHours());
+            statement.setString(6, item.getCategory());
+            statement.setLong(7, item.getBoughtAmount());
+            statement.setLong(8, item.getSoldAmount());
+            statement.setDouble(9, net);
+            statement.setLong(10, item.getLastDecay());
             statement.execute();
             statement.close();
-
-            MarketItem added = new MarketItem(item, basePrice, 0, 0, minPrice, impactK);
-            added.setHalfLifeHours(halfLifeHours);
-            return added;
+            return item.clone();
         } catch (SQLException throwables) {
             logger.warning(throwables.getMessage());
             return null;
@@ -217,71 +227,26 @@ public class MySqlDatabase implements Database{
     }
 
     @Override
-    public MarketItem addItem(String item, double basePrice, double minPrice, long boughtAmount, long soldAmount, double impactK, double halfLifeHours) {
+    public MarketItem setItem(MarketItem item) {
         try {
             PreparedStatement statement = getConnection().prepareStatement(
-                    "INSERT INTO items (item_name, base_price, min_price, bought_amount, sold_amount, impact_k, half_life_hours, net_position, last_decay)" +
-                            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);"
+                    "UPDATE items SET base_price = ?, min_price = ?, impact_k = ?, half_life_hours = ?, category = ?," +
+                            " bought_amount = ?, sold_amount = ?, net_position = ?, last_decay = ? WHERE item_name = ?;"
             );
-            statement.setString(1, item);
-            statement.setDouble(2, basePrice);
-            statement.setDouble(3, minPrice);
-            statement.setLong(4, boughtAmount);
-            statement.setLong(5, soldAmount);
-            statement.setDouble(6, impactK);
-            statement.setDouble(7, halfLifeHours);
-            statement.setDouble(8, boughtAmount - soldAmount);
-            statement.setLong(9, System.currentTimeMillis());
+            double net = item.getNet();
+            statement.setDouble(1, item.getBasePrice());
+            statement.setDouble(2, item.getMinPrice());
+            statement.setDouble(3, item.getK());
+            statement.setDouble(4, item.getHalfLifeHours());
+            statement.setString(5, item.getCategory());
+            statement.setLong(6, item.getBoughtAmount());
+            statement.setLong(7, item.getSoldAmount());
+            statement.setDouble(8, net);
+            statement.setLong(9, item.getLastDecay());
+            statement.setString(10, item.getName());
             statement.execute();
             statement.close();
-
-            MarketItem added = new MarketItem(item, basePrice, boughtAmount, soldAmount, minPrice, impactK);
-            added.setHalfLifeHours(halfLifeHours);
-            return added;
-        } catch (SQLException throwables) {
-            logger.warning(throwables.getMessage());
-            return null;
-        }
-    }
-
-    @Override
-    public MarketItem setItem(String item, double basePrice, double minPrice, long boughtAmount, long soldAmount, double impactK, double halfLifeHours) {
-        try {
-            PreparedStatement statement = getConnection().prepareStatement(
-                    "UPDATE items SET base_price = ?, min_price = ?, bought_amount = ?, sold_amount = ?, impact_k = ?, half_life_hours = ? WHERE item_name = ?;"
-            );
-            statement.setDouble(1, basePrice);
-            statement.setDouble(2, minPrice);
-            statement.setLong(3, boughtAmount);
-            statement.setLong(4, soldAmount);
-            statement.setDouble(5, impactK);
-            statement.setDouble(6, halfLifeHours);
-            statement.setString(7, item);
-            statement.execute();
-            statement.close();
-
-            MarketItem written = new MarketItem(item, basePrice, boughtAmount, soldAmount, minPrice, impactK);
-            written.setHalfLifeHours(halfLifeHours);
-            return written;
-        } catch (SQLException throwables) {
-            logger.warning(throwables.getMessage());
-            return null;
-        }
-    }
-
-    @Override
-    public MarketItem setItemStatics(String item, double basePrice, double minPrice, double impactK) {
-        try {
-            PreparedStatement statement = getConnection().prepareStatement(
-                    "UPDATE items SET base_price = ?, min_price = ?, impact_k = ? WHERE item_name = ?;"
-            );
-            statement.setDouble(1, basePrice);
-            statement.setDouble(2, minPrice);
-            statement.setDouble(3, impactK);
-            statement.setString(4, item);
-            statement.execute();
-            statement.close();
-            return new MarketItem(item, basePrice, 0, 0, minPrice, impactK);
+            return item.clone();
         } catch (SQLException throwables) {
             logger.warning(throwables.getMessage());
             return null;
@@ -324,6 +289,7 @@ public class MySqlDatabase implements Database{
                     resultSet.getDouble("impact_k")
             );
             item.setHalfLifeHours(resultSet.getDouble("half_life_hours"));
+            item.setCategory(resultSet.getString("category"));
             item.restoreNet(resultSet.getDouble("net_position"), resultSet.getLong("last_decay"));
             statement.close();
             return item;
@@ -351,6 +317,7 @@ public class MySqlDatabase implements Database{
                         resultSet.getDouble("impact_k")
                 );
                 item.setHalfLifeHours(resultSet.getDouble("half_life_hours"));
+                item.setCategory(resultSet.getString("category"));
                 item.restoreNet(resultSet.getDouble("net_position"), resultSet.getLong("last_decay"));
                 items.add(item);
             }
@@ -368,13 +335,13 @@ public class MySqlDatabase implements Database{
             MarketItem dbItem = getItem(item.getName());
 
             if (dbItem==null){
-                addItem(item.getName(), item.getBasePrice(), item.getMinPrice(), item.getBoughtAmount(), item.getSoldAmount(), item.getK(), item.getHalfLifeHours());
+                addItem(item);
                 continue;
             }
             if (staticsDrifted(dbItem, item)){
-                setItem(item.getName(), item.getBasePrice(), item.getMinPrice(), item.getBoughtAmount(), item.getSoldAmount(), item.getK(), item.getHalfLifeHours());
+                setItem(item);
+                continue;
             }
-            // setItem has no net to write, so the counters always go through here
             setAmounts(item, item.getBoughtAmount(), item.getSoldAmount());
         }
         return getAllItems();
@@ -384,7 +351,42 @@ public class MySqlDatabase implements Database{
         return dbItem.getBasePrice() != item.getBasePrice()
                 || dbItem.getMinPrice() != item.getMinPrice()
                 || dbItem.getK() != item.getK()
-                || dbItem.getHalfLifeHours() != item.getHalfLifeHours();
+                || dbItem.getHalfLifeHours() != item.getHalfLifeHours()
+                || !dbItem.getCategory().equals(item.getCategory());
+    }
+
+    /***
+     * Latest price per item at or before the cutoff, for "changed X% today". Rows from
+     * before the price columns existed carry 0 and would read as an infinite move.
+     */
+    @Override
+    public Map<String, Double> getPricesAt(int hoursAgo) {
+        try {
+            PreparedStatement statement = getConnection().prepareStatement(
+                    "SELECT i.item_name, (" +
+                            "  SELECT h.unit_price FROM item_history h" +
+                            "  WHERE h.item_id = i.item_id AND h.unit_price > 0" +
+                            "    AND h.change_date <= DATE_SUB(NOW(), INTERVAL ? HOUR)" +
+                            "  ORDER BY h.change_date DESC LIMIT 1" +
+                            ") AS old_price FROM items i;"
+            );
+            statement.setInt(1, hoursAgo);
+            statement.execute();
+            ResultSet resultSet = statement.getResultSet();
+
+            Map<String, Double> prices = new HashMap<>();
+            while (resultSet.next()) {
+                double price = resultSet.getDouble("old_price");
+                if (!resultSet.wasNull() && price > 0) {
+                    prices.put(resultSet.getString("item_name"), price);
+                }
+            }
+            statement.close();
+            return prices;
+        } catch (SQLException throwables) {
+            logger.warning(throwables.getMessage());
+            return null;
+        }
     }
 
     @Override

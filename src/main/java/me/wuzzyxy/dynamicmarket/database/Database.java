@@ -3,14 +3,13 @@ package me.wuzzyxy.dynamicmarket.database;
 import me.wuzzyxy.dynamicmarket.items.MarketItem;
 
 import java.util.List;
+import java.util.Map;
 
 public interface Database {
     void die();
 
-    MarketItem addItem(String item, double basePrice, double minPrice, double impactK, double halfLifeHours);
-    MarketItem addItem(String item, double basePrice, double minPrice, long boughtAmount, long soldAmount, double impactK, double halfLifeHours);
-    MarketItem setItem(String item, double basePrice, double minPrice, long boughtAmount, long soldAmount, double impactK, double halfLifeHours);
-    MarketItem setItemStatics(String item, double basePrice, double minPrice, double impactK);
+    MarketItem addItem(MarketItem item);
+    MarketItem setItem(MarketItem item);
     boolean removeItem(String item);
     MarketItem getItem(String item);
     List<MarketItem> getAllItems();
@@ -30,6 +29,7 @@ public interface Database {
 
     boolean snapshotHistory();
     int pruneHistory(int retentionDays);
+    Map<String, Double> getPricesAt(int hoursAgo);
 
     @Deprecated
     boolean createHistoryPoint(MarketItem item);

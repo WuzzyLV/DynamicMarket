@@ -11,105 +11,105 @@ items:
   # bulk terrain, farmable by the shulker
   cobblestone:
     base_price: 0.6
-    category: terrain
+    category: masonry
     units_to_double: 40000
     half_life_hours: 36
     min_price: 0.04
   stone:
     base_price: 1
-    category: terrain
+    category: masonry
     units_to_double: 40000
     half_life_hours: 36
     min_price: 0.06
   cobbled_deepslate:
     base_price: 0.5
-    category: terrain
+    category: masonry
     units_to_double: 40000
     half_life_hours: 36
     min_price: 0.03
   dirt:
     base_price: 0.5
-    category: terrain
+    category: landscaping
     units_to_double: 30000
     half_life_hours: 36
     min_price: 0.03
   sand:
     base_price: 0.5
-    category: terrain
+    category: landscaping
     units_to_double: 30000
     half_life_hours: 36
     min_price: 0.03
   gravel:
     base_price: 1
-    category: terrain
+    category: landscaping
     units_to_double: 30000
     half_life_hours: 36
     min_price: 0.06
 
-  # hand-gathered stone and soil
+  # hand-gathered masonry and landscaping
   granite:
     base_price: 0.75
-    category: stone
+    category: masonry
     units_to_double: 15000
     half_life_hours: 48
     min_price: 0.05
   diorite:
     base_price: 0.75
-    category: stone
+    category: masonry
     units_to_double: 15000
     half_life_hours: 48
     min_price: 0.05
   andesite:
     base_price: 0.75
-    category: stone
+    category: masonry
     units_to_double: 15000
     half_life_hours: 48
     min_price: 0.05
   tuff:
     base_price: 0.75
-    category: stone
+    category: masonry
     units_to_double: 15000
     half_life_hours: 48
     min_price: 0.05
   calcite:
     base_price: 1.5
-    category: stone
+    category: masonry
     units_to_double: 12000
     half_life_hours: 48
     min_price: 0.1
   sandstone:
     base_price: 0.5
-    category: stone
+    category: masonry
     units_to_double: 20000
     half_life_hours: 48
     min_price: 0.03
   red_sand:
     base_price: 0.5
-    category: stone
+    category: landscaping
     units_to_double: 12000
     half_life_hours: 48
     min_price: 0.03
   clay:
     base_price: 6
-    category: soil
+    category: landscaping
     units_to_double: 10000
     half_life_hours: 48
     min_price: 0.08
   terracotta:
     base_price: 1
-    category: stone
+    category: masonry
     units_to_double: 15000
     half_life_hours: 48
     min_price: 0.06
   grass_block:
     base_price: 1
-    category: soil
+    category: landscaping
     units_to_double: 12000
     half_life_hours: 48
     min_price: 0.06
   podzol:
     base_price: 1.5
-    category: soil
+    category: landscaping
     units_to_double: 8000
     half_life_hours: 60
     min_price: 0.1

@@ -21,7 +21,7 @@ class MarketReportTest {
     private static final ReportSettings SETTINGS = new ReportSettings(
             24, 0.1,
             "<green>UP <item> <change>", "<red>DOWN <item> <change>",
-            "<green>^", "<red>v", "<gray>-", "");
+            "<green>^", "<red>v", "<gray>-", "<dark_gray>quiet");
 
     private final List<MarketItem> items = new ArrayList<>();
     private final Map<String, Double> pricesBefore = new HashMap<>();
@@ -115,6 +115,17 @@ class MarketReportTest {
         report.refresh();
 
         assertEquals("§aUP Red Sand 12.0", report.moverLine(new String[]{"up", "stone", "1"}));
+    }
+
+    /***
+     * The filler sits in a lore line next to real movers, so it has to come out styled
+     * the same way rather than as raw tag text.
+     */
+    @Test
+    void theEmptyFillerIsStyledLikeEverythingElse() {
+        report.refresh();
+
+        assertEquals("§8quiet", report.moverLine(new String[]{"up", "wood", "1"}));
     }
 
     @Test

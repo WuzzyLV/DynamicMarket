@@ -5,6 +5,7 @@ import me.wuzzyxy.dynamicmarket.database.Database;
 import me.wuzzyxy.dynamicmarket.items.MarketItem;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
+import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
 import java.util.ArrayList;
@@ -83,12 +84,12 @@ public class MarketReport {
     // %DMMover_<up|down>,<category>,<rank>%
     public String moverLine(String[] params) {
         Mover mover = mover(params);
-        if (mover == null) return settings.empty();
+        if (mover == null) return render(settings.empty());
 
         String template = mover.change() >= 0 ? settings.moverUp() : settings.moverDown();
-        return LEGACY.serialize(MINI.deserialize(template,
+        return render(template,
                 Placeholder.unparsed("item", pretty(mover.item())),
-                Placeholder.unparsed("change", formatChange(mover.change()))));
+                Placeholder.unparsed("change", formatChange(mover.change())));
     }
 
     // %DMMoverItem_<up|down>,<category>,<rank>%
@@ -112,7 +113,7 @@ public class MarketReport {
 
     // %DMTrend_<item>%
     public String itemTrend(String[] params) {
-        if (params.length != 1) return settings.empty();
+        if (params.length != 1) return render(settings.empty());
 
         Double change = changeByItem.get(params[0]);
         String template;
@@ -121,7 +122,11 @@ public class MarketReport {
         } else {
             template = change > 0 ? settings.trendUp() : settings.trendDown();
         }
-        return LEGACY.serialize(MINI.deserialize(template));
+        return render(template);
+    }
+
+    private static String render(String template, TagResolver... resolvers) {
+        return LEGACY.serialize(MINI.deserialize(template, resolvers));
     }
 
     private Mover mover(String[] params) {

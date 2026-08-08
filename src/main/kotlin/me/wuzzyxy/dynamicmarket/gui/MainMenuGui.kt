@@ -207,6 +207,7 @@ class MainMenuGui(private val ctx: GuiManager) {
             val result = ctx.trades.sellEverything(viewer)
             viewer.announceSweep(result, ctx.economy, ctx.shopConfig)
             liveItems.forEach(Item::notifyWindows)
+            ctx.registry.refresh(result.lines.map { it.item.name }, exclude = viewer.uniqueId)
         }
         .build()
 

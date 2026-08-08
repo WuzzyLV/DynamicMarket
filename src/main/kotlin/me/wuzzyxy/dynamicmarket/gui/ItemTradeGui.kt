@@ -4,6 +4,7 @@ import me.wuzzyxy.dynamicmarket.configs.GuiElementConfig
 import me.wuzzyxy.dynamicmarket.items.MarketItem
 import me.wuzzyxy.dynamicmarket.items.countMatching
 import me.wuzzyxy.dynamicmarket.items.prettyItemName
+import me.wuzzyxy.dynamicmarket.market.TradeResult
 import xyz.xenondevs.invui.gui.Gui
 import xyz.xenondevs.invui.gui.SlotElement
 import xyz.xenondevs.invui.item.Item
@@ -26,9 +27,8 @@ private fun layoutSlots(layout: List<String>, char: Char): List<Int> =
  * is actually carrying right now. Every named element (display/quantity/sell-all/back/close)
  * is optional — see MenuConfig — and just isn't placed when its config section is missing.
  *
- * Note this window doesn't refresh for a *different* player who has the same item open at the
- * same time — only the clicking player's own buttons re-render. Two players racing the same
- * item's buy screen will see a stale price until they interact again; acceptable for now.
+ * Registers with [GuiManager.registry] while open, so a trade made *here* also refreshes any
+ * other player who has this same item's screen open right now — not just this window.
  */
 class ItemTradeGui(private val ctx: GuiManager, private val item: MarketItem) {
 
@@ -68,9 +68,12 @@ class ItemTradeGui(private val ctx: GuiManager, private val item: MarketItem) {
             }
         }
 
+        ctx.registry.register(player.uniqueId, setOf(item.name), liveItems)
+
         Window.builder()
             .setTitle(menu.title.withPlaceholders(mapOf("item" to prettyItemName(item.name))))
             .setUpperGui(gui)
+            .addCloseHandler { ctx.registry.unregister(player.uniqueId) }
             .open(player)
     }
 
@@ -116,6 +119,7 @@ class ItemTradeGui(private val ctx: GuiManager, private val item: MarketItem) {
             if (result != null) {
                 viewer.announce(result, ctx.economy, ctx.shopConfig)
                 refresh()
+                if (result !is TradeResult.Denied) ctx.registry.refresh(item.name, exclude = viewer.uniqueId)
             }
         }
         .build()
@@ -141,9 +145,11 @@ class ItemTradeGui(private val ctx: GuiManager, private val item: MarketItem) {
     private fun sellAllItem(config: GuiElementConfig): Item = Item.builder()
         .setItemProvider { player -> sellAllProvider(config, player) }
         .addClickHandler { click ->
-            val result = ctx.trades.sellAll(click.player(), item)
-            click.player().announce(result, ctx.economy, ctx.shopConfig)
+            val viewer = click.player()
+            val result = ctx.trades.sellAll(viewer, item)
+            viewer.announce(result, ctx.economy, ctx.shopConfig)
             refresh()
+            if (result !is TradeResult.Denied) ctx.registry.refresh(item.name, exclude = viewer.uniqueId)
         }
         .build()
 

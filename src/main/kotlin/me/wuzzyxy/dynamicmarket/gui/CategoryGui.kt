@@ -19,6 +19,9 @@ import org.bukkit.entity.Player
  * Page nav only renders when there's actually somewhere to go: on a single-page category (the
  * common case today) both buttons stay as plain filler instead of a dead button that clicks
  * for nothing.
+ *
+ * Registers with [GuiManager.registry] while open, so a trade made on this category's items
+ * (from anyone's item screen, including this player's own) refreshes the prices shown here too.
  */
 class CategoryGui(private val ctx: GuiManager, private val category: String) {
 
@@ -26,7 +29,9 @@ class CategoryGui(private val ctx: GuiManager, private val category: String) {
     private val shared get() = ctx.menuConfig.shared
 
     fun open(player: Player) {
-        val content: List<Item> = menu.item?.let { config -> resolvableItems().map { itemButton(config, it) } } ?: emptyList()
+        val itemConfig = menu.item
+        val categoryItems = if (itemConfig != null) resolvableItems() else emptyList()
+        val content: List<Item> = if (itemConfig != null) categoryItems.map { itemButton(itemConfig, it) } else emptyList()
 
         val prev = BoundItem.pagedBuilder()
             .setItemProvider { _, gui -> navIcon(gui.page > 0, shared.prevPage) }
@@ -63,9 +68,14 @@ class CategoryGui(private val ctx: GuiManager, private val category: String) {
             )
         }
 
+        if (content.isNotEmpty()) {
+            ctx.registry.register(player.uniqueId, categoryItems.map(MarketItem::name).toSet(), content)
+        }
+
         Window.builder()
             .setTitle(menu.title.withPlaceholders(mapOf("category" to displayCategory)))
             .setUpperGui(gui)
+            .addCloseHandler { ctx.registry.unregister(player.uniqueId) }
             .open(player)
     }
 

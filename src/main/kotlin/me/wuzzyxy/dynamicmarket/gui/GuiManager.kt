@@ -22,6 +22,7 @@ class GuiManager(
 ) {
     val shopConfig get() = plugin.shopConfig
     val menuConfig get() = plugin.menuConfig
+    val registry = GuiRegistry()
 
     private val warnedUnresolvable = mutableSetOf<String>()
 

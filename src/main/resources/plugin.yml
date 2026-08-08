@@ -5,6 +5,14 @@ api-version: '26.2'
 
 softdepend:
   - PlaceholderAPI
+  - Vault
+  - CraftEngine
+
+# Fetched from Maven Central on first boot and cached under the server's libraries folder.
+# The jar carries only plugin classes, so without this the plugin dies on NoClassDefFoundError.
+# InvUI is shaded into the jar directly instead (see build.gradle) — it isn't on Maven Central.
+libraries:
+  - org.jetbrains.kotlin:kotlin-stdlib:${kotlinVersion}
 
 commands:
   dmarket:
@@ -27,3 +35,16 @@ commands:
         description: Sells an item to a market
         usage: /dmarket sell <name> <item> [amount]
         permission: dynamicmarket.command.sell
+  market:
+    description: Opens the market shop GUI
+    usage: /market [category]
+    aliases: [marketplace, shop, buy, sell]
+    permission: dynamicmarket.menu
+
+permissions:
+  dynamicmarket.menu:
+    description: Allows opening the market shop GUI
+    default: true
+  dynamicmarket.command:
+    description: Allows use of /dmarket
+    default: op

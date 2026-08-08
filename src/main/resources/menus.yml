@@ -1,0 +1,150 @@
+# /market GUI layout and text.
+#
+# Every named element (not the layout/title/row strings) is fully optional: delete the whole
+# section and that button/slot disappears from the menu — it does NOT fall back to a default,
+# unlike a missing layout/title which does (those are structure, not something to switch off).
+# Deleting `shared.close`, for example, just means there's no close button; players can still
+# close the window normally. This file is never overwritten on an existing install, so your
+# edits (including deletions) stick across updates.
+#
+# icon: a vanilla Material name, or a CraftEngine id ("namespace:value") — same rule as
+#   items.yml. Ignored on elements bound to a traded item (main.category, main.mover,
+#   category.item, item.display, item.quantity) — those always show the item's own icon, same
+#   as the chip icon in the reference bet GUI this was modelled on.
+# name / lore: MiniMessage. %token% placeholders are substituted first, MiniMessage parses
+#   after. A lore line that is *only* one placeholder and resolves to nothing is dropped
+#   entirely rather than left blank, so an optional line (a missing mover, a hint) doesn't
+#   leave a gap.
+#
+# Layout strings are InvUI structures: 9 space-separated single characters, one per column.
+# The home screen (main.*) is the exception — its total row count is computed at runtime from
+# how many categories and movers actually exist, so there's no single fixed layout for it to
+# override. What you *can* configure there is what's inside each row: header/footer and the
+# category/gainers/fallers row templates below.
+
+shared:
+  filler:
+    icon: GRAY_STAINED_GLASS_PANE
+    name: " "
+  back:
+    icon: ARROW
+    name: "<green>« Back"
+  close:
+    icon: BARRIER
+    name: "<red>Close"
+  # Only shown when there actually is a previous/next page — a category that fits on one page
+  # never shows either, instead of a dead button that does nothing when clicked.
+  prev_page:
+    icon: ARROW
+    name: "<green>« Previous page"
+  next_page:
+    icon: ARROW
+    name: "<green>Next page »"
+
+main:
+  title: "<dark_gray><bold>Market"
+  # s = sell everything
+  header: "# # # # # # # # s"
+  # g = one category button
+  category_row: "# g g g g g g g #"
+  # l = section label, m = one mover
+  gainers_row: "l m m m m m m m m"
+  fallers_row: "l m m m m m m m m"
+  # c = close
+  footer: "# # # # # # # # c"
+  elements:
+    sell_everything:
+      icon: HOPPER
+      name: "<gold><bold>Sell Everything"
+      lore:
+        - "<gray>Sells every item in your"
+        - "<gray>inventory this market buys."
+        - ""
+        - "<yellow>Click to sell it all"
+    gainers_label:
+      icon: LIME_DYE
+      name: "<green><bold>Top Gainers"
+      lore:
+        - "<gray>Last %hours%h"
+    fallers_label:
+      icon: RED_DYE
+      name: "<red><bold>Top Fallers"
+      lore:
+        - "<gray>Last %hours%h"
+  # One button per category. icon is the category's representative item and can't be
+  # overridden here. %top_gainer_line% / %top_faller_line% are each a full formatted line,
+  # or empty (and dropped) when that category has nothing to report.
+  category:
+    icon: CHEST
+    name: "<white><bold>%category%"
+    lore:
+      - "<gray>%count% item(s)"
+      - "%top_gainer_line%"
+      - "%top_faller_line%"
+      - ""
+      - "<yellow>Click to browse"
+  # One button per mover in the gainers/fallers rows above.
+  mover:
+    icon: PAPER
+    name: "<white><bold>%item%"
+    lore:
+      - "%arrow% %sign%%change%% <gray>(%category%)"
+      - ""
+      - "<yellow>Click to browse"
+
+category:
+  title: "<dark_gray>Market <gray>» <white>%category%"
+  # i = category label, x = item content slot (paged), b = back, < / > = page nav, c = close.
+  # 45 slots, matching the size of the original marketWood.yml-style category menus.
+  layout:
+    - "# # # # i # # # #"
+    - "# x x x x x x x #"
+    - "# x x x x x x x #"
+    - "# x x x x x x x #"
+    - "b < # # # # # > c"
+  label:
+    icon: BOOK
+    name: "<gold><bold>%category%"
+    lore:
+      - "<gray>%count% item(s) for sale"
+  item:
+    icon: BARRIER
+    name: "<white><bold>%item%"
+    lore:
+      - "<green>✦ Buy for <gold>%buy%"
+      - "<red>✦ Sell for <gold>%sell%"
+      - ""
+      - "<yellow>Click to browse"
+
+item:
+  title: "<dark_gray>Market <gray>» <white>%item%"
+  # d = item display, q = one quantity tier (as many as configs shop.quantities has slots
+  # for), b = back, a = sell all, c = close. 27 slots, matching the original marketBuyScreen.yml.
+  layout:
+    - "# # # # d # # # #"
+    - "# q q q q q q q #"
+    - "b # a # # # # # c"
+  display:
+    icon: BARRIER
+    name: "<white><bold>%item%"
+    lore:
+      - "<gray>Category: <white>%category%"
+      - "<gray>Current price: <gold>%unit% <gray>/ unit"
+      - "<gray>You're carrying: <white>%owned%"
+  quantity:
+    icon: BARRIER
+    name: "<white><bold>%amount% <gray>x <white>%item%"
+    lore:
+      - "%afford_color%✦ Buy for <gold>%buy%"
+      - "%sell_color%✦ Sell for <gold>%sell%"
+      - ""
+      - "<dark_gray>⏵ <gray>Left click to buy"
+      - "<dark_gray>⏵ <gray>Right click to sell"
+  sell_all:
+    icon: HOPPER
+    name: "<gold><bold>Sell All <white>%item%"
+    lore:
+      - "<gray>You have: <white>%owned%"
+      - "<gray>Sell for: <gold>%price%"
+      - ""
+      - "%sell_all_hint%"

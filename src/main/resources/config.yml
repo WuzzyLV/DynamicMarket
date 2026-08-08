@@ -44,3 +44,13 @@ report:
 # along the curve handles that now, so the spread is free to be something players will
 # actually trade against.
 sell_multiplier: 0.85
+
+# The /market GUI. Needs Vault + an economy plugin to actually trade; without one the
+# menu still opens (browsing prices is harmless) but buy/sell/sell-all are refused.
+shop:
+  # Quantity tiers offered on an item's buy/sell screen, left to right.
+  quantities: [1, 6, 12, 32, 64]
+  # Cap on how many risers/fallers the home screen shows per row. The row itself is only
+  # added at all when there's at least one mover to show — a quiet market gets a shorter menu.
+  movers_shown: 8
+  sounds: true

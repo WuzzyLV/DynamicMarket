@@ -6,6 +6,9 @@
 # half_life_hours: how fast net position drifts back to zero. Renewables heal fast,
 #   awkward-to-farm things stay crashed longer so the crash is worth something.
 # min_price is inert — the exponential curve asymptotes instead of hitting a floor.
+#
+# The item key is either a lowercase vanilla Material name (cobblestone) or a namespaced
+# CraftEngine id (mypack:ruby) — the ':' is what tells the shop GUI which one it's looking at.
 
 items:
   # bulk terrain, farmable by the shulker

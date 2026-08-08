@@ -45,7 +45,7 @@ public class MarketManager {
         this.report = new MarketReport(plugin.getPluginConfig().reportSettings(), this::getWorkingItems, database, priceHandler);
 
         long reportTicks = Math.max(1, plugin.getPluginConfig().REPORT_REFRESH_SECONDS) * 20L;
-        Bukkit.getServer().getScheduler().scheduleSyncRepeatingTask(plugin, report::refresh, reportTicks, reportTicks);
+        Bukkit.getServer().getScheduler().scheduleSyncRepeatingTask(plugin, report::refresh, 220L, reportTicks);
     }
 
     private List<MarketItem> getAllDBItems() {

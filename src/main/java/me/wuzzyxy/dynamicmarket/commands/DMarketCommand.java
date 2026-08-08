@@ -24,6 +24,7 @@ public class DMarketCommand implements CommandExecutor {
         subCommands.put("set", new SetCommand(plugin.getMarketManager()));
         subCommands.put("debug", new DebugCommand(plugin.getMarketManager(), plugin.getMarketManager().getPriceHandler()));
         subCommands.put("push", new ForcePushCommand(plugin.getMarketManager().getDatabaseHandler()));
+        subCommands.put("report", new ReportCommand(plugin.getMarketManager(), plugin.getPluginConfig().REPORT_WINDOW_HOURS));
 
         plugin.getCommand("dmarket").setTabCompleter(new CommandCompleter(
                 plugin.getMarketManager(),

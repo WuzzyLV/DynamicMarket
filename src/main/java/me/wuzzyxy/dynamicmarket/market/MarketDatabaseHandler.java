@@ -46,9 +46,11 @@ public class MarketDatabaseHandler {
         long ticks = plugin.getPluginConfig().HISTORY_SNAPSHOT_MINUTES * 60L * 20L;
         if (ticks <= 0) return;
 
+        // First one lands shortly after boot rather than a whole interval later, so a new
+        // install has something to compare against instead of an empty report all day.
         Bukkit.getServer().getScheduler().scheduleSyncRepeatingTask(plugin, () -> {
             database.snapshotHistory();
             database.pruneHistory(plugin.getPluginConfig().HISTORY_RETENTION_DAYS);
-        }, ticks, ticks);
+        }, 200L, ticks);
     }
 }

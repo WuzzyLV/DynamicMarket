@@ -356,19 +356,27 @@ public class MySqlDatabase implements Database{
     }
 
     /***
-     * Latest price per item at or before the cutoff, for "changed X% today". Rows from
-     * before the price columns existed carry 0 and would read as an infinite move.
+     * Price to compare today against: the newest row at or before the cutoff, or failing
+     * that the oldest row there is. Without the fallback a fresh install has nothing old
+     * enough to compare to and the whole report reads empty until the window has elapsed,
+     * however much the prices actually moved in the meantime.
+     *
+     * Rows from before the price columns existed carry 0 and would read as an infinite move.
      */
     @Override
     public Map<String, Double> getPricesAt(int hoursAgo) {
         try {
             PreparedStatement statement = getConnection().prepareStatement(
-                    "SELECT i.item_name, (" +
+                    "SELECT i.item_name, COALESCE((" +
                             "  SELECT h.unit_price FROM item_history h" +
                             "  WHERE h.item_id = i.item_id AND h.unit_price > 0" +
                             "    AND h.change_date <= DATE_SUB(NOW(), INTERVAL ? HOUR)" +
                             "  ORDER BY h.change_date DESC LIMIT 1" +
-                            ") AS old_price FROM items i;"
+                            "), (" +
+                            "  SELECT h.unit_price FROM item_history h" +
+                            "  WHERE h.item_id = i.item_id AND h.unit_price > 0" +
+                            "  ORDER BY h.change_date ASC LIMIT 1" +
+                            ")) AS old_price FROM items i;"
             );
             statement.setInt(1, hoursAgo);
             statement.execute();

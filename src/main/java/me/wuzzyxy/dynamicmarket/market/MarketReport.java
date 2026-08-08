@@ -129,6 +129,18 @@ public class MarketReport {
         return LEGACY.serialize(MINI.deserialize(template, resolvers));
     }
 
+    /***
+     * Items with a price to compare against. Anything below the total means those items
+     * have no usable history yet and cannot appear as movers whatever their price did.
+     */
+    public int trackedCount() {
+        return changeByItem.size();
+    }
+
+    public List<String> categories() {
+        return items.get().stream().map(MarketItem::getCategory).distinct().sorted().toList();
+    }
+
     private Mover mover(String[] params) {
         if (params.length != 3) return null;
 

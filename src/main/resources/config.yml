@@ -39,6 +39,21 @@ report:
   trend_flat: "<gray>-"
   # Shown when there is no Nth mover. Leave blank to hide the line via a DeluxeMenus requirement.
   empty: ""
+  # <category>, <avg_change>, <up_count>, <down_count>, <tracked_count>.
+  category_summary: "<white><category> <gray>avg <avg_change><white>% <green><up_count>↑ <red><down_count>↓"
+  # A category (or "all") counts as bullish/bearish once up_percent/down_percent reaches this
+  # threshold; otherwise it's mixed. up_percent/down_percent are a share of the MOVERS (items
+  # that cleared min_change_percent either way), not of every tracked item — a category that's
+  # mostly flat with a couple of fallers and zero risers is bearish, not mixed, even though
+  # those fallers are a small slice of the whole category. <up_percent>, <down_percent>,
+  # <up_count>, <down_count>, <tracked_count>, <category> are available in all three templates.
+  sentiment_threshold_percent: 60
+  sentiment_bullish: "<green>Bullish <gray>- <white><up_percent>% of movers rising <gray>(<tracked_count> tracked)"
+  sentiment_bearish: "<red>Bearish <gray>- <white><down_percent>% of movers falling <gray>(<tracked_count> tracked)"
+  sentiment_mixed: "<yellow>Mixed <gray>- <white><up_count> up <gray>/ <white><down_count> down"
+  # Units bought+sold within the report window, ranked per category (or "all"). <item>, <units>,
+  # <bought>, <sold>.
+  volume_leader: "<white><item> <gray>- <white><units> <gray>traded"
 # Fraction of the buy price you get back when selling. This used to be the only thing
 # standing between the market and a round-trip profit, and it was not enough. Pricing
 # along the curve handles that now, so the spread is free to be something players will

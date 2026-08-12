@@ -35,6 +35,10 @@ commands:
         description: Sells an item to a market
         usage: /dmarket sell <name> <item> [amount]
         permission: dynamicmarket.command.sell
+      holo:
+        description: Places/removes/moves market holo boards
+        usage: /dmarket holo <place|remove|move|list> ...
+        permission: dynamicmarket.command.holo
   market:
     description: Opens the market shop GUI
     usage: /market [category]

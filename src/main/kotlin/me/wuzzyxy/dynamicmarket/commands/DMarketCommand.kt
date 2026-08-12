@@ -5,6 +5,7 @@ import me.wuzzyxy.dynamicmarket.commands.args.ArgsCommand
 import me.wuzzyxy.dynamicmarket.commands.args.BuySellCommand
 import me.wuzzyxy.dynamicmarket.commands.args.DebugCommand
 import me.wuzzyxy.dynamicmarket.commands.args.ForcePushCommand
+import me.wuzzyxy.dynamicmarket.commands.args.HoloBoardCommand
 import me.wuzzyxy.dynamicmarket.commands.args.HomeCommand
 import me.wuzzyxy.dynamicmarket.commands.args.ReloadCommand
 import me.wuzzyxy.dynamicmarket.commands.args.ReportCommand
@@ -23,6 +24,7 @@ class DMarketCommand(plugin: DynamicMarket) : CommandExecutor {
         "debug" to DebugCommand(plugin.marketManager, plugin.marketManager.priceHandler),
         "push" to ForcePushCommand(plugin.marketManager.databaseHandler),
         "report" to ReportCommand(plugin.marketManager),
+        "holo" to HoloBoardCommand(plugin),
         "reload" to ReloadCommand(plugin),
     )
 

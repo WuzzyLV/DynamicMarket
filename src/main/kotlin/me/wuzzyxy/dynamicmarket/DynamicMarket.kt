@@ -1,5 +1,6 @@
 package me.wuzzyxy.dynamicmarket
 
+import me.wuzzyxy.dynamicmarket.board.HoloBoardManager
 import me.wuzzyxy.dynamicmarket.commands.DMarketCommand
 import me.wuzzyxy.dynamicmarket.commands.MarketMenuCommand
 import me.wuzzyxy.dynamicmarket.configs.ItemConfig
@@ -38,6 +39,9 @@ class DynamicMarket : JavaPlugin() {
     lateinit var marketManager: MarketManager
         private set
 
+    lateinit var holoBoardManager: HoloBoardManager
+        private set
+
     lateinit var guiManager: GuiManager
         private set
 
@@ -70,6 +74,7 @@ class DynamicMarket : JavaPlugin() {
         this.database = database
 
         marketManager = MarketManager(this, database)
+        holoBoardManager = HoloBoardManager(this, marketManager.report)
 
         // SHOP — the /market GUI. Works without Vault/CraftEngine (menu still opens; trades
         // that need them are refused with a clear reason at click time, not silently missing).
@@ -98,6 +103,9 @@ class DynamicMarket : JavaPlugin() {
             MarketExpansion(this, "DMMoverChange", report::moverChange).register()
             MarketExpansion(this, "DMChange", report::itemChange).register()
             MarketExpansion(this, "DMTrend", report::itemTrend).register()
+            MarketExpansion(this, "DMCategorySummary", report::categorySummaryLine).register()
+            MarketExpansion(this, "DMSentiment", report::sentimentLine).register()
+            MarketExpansion(this, "DMVolume", report::volumeLeaderLine).register()
         }
     }
 
@@ -106,6 +114,9 @@ class DynamicMarket : JavaPlugin() {
      * away up to a whole push interval of them.
      */
     override fun onDisable() {
+        if (::holoBoardManager.isInitialized) {
+            holoBoardManager.teardownAll()
+        }
         if (::marketManager.isInitialized) {
             marketManager.databaseHandler.pushItems()
         }
@@ -145,5 +156,6 @@ class DynamicMarket : JavaPlugin() {
         shopConfig = ShopConfig(this)
         menuConfig = MenuConfig(this)
         marketManager.reload()
+        holoBoardManager.reload()
     }
 }

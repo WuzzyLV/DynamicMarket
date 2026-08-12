@@ -286,6 +286,49 @@ class MySqlDatabase @Throws(SQLException::class, IOException::class) constructor
         prices
     }
 
+    /***
+     * Same nearest-before-or-oldest fallback as getPricesAt, but for the lifetime tallies
+     * instead of price — this is what a caller subtracts from the current tallies to get
+     * units traded within the window, since only the running totals are stored anywhere.
+     */
+    override fun getVolumesAt(hoursAgo: Int): Map<String, Pair<Long, Long>>? = withStatement(
+        "SELECT i.item_name," +
+            "  COALESCE((" +
+            "    SELECT h.bought_amount FROM item_history h" +
+            "    WHERE h.item_id = i.item_id AND h.change_date <= DATE_SUB(NOW(), INTERVAL ? HOUR)" +
+            "    ORDER BY h.change_date DESC LIMIT 1" +
+            "  ), (" +
+            "    SELECT h.bought_amount FROM item_history h" +
+            "    WHERE h.item_id = i.item_id ORDER BY h.change_date ASC LIMIT 1" +
+            "  )) AS old_bought," +
+            "  COALESCE((" +
+            "    SELECT h.sold_amount FROM item_history h" +
+            "    WHERE h.item_id = i.item_id AND h.change_date <= DATE_SUB(NOW(), INTERVAL ? HOUR)" +
+            "    ORDER BY h.change_date DESC LIMIT 1" +
+            "  ), (" +
+            "    SELECT h.sold_amount FROM item_history h" +
+            "    WHERE h.item_id = i.item_id ORDER BY h.change_date ASC LIMIT 1" +
+            "  )) AS old_sold" +
+            " FROM items i;"
+    ) { statement ->
+        statement.setInt(1, hoursAgo)
+        statement.setInt(2, hoursAgo)
+        statement.execute()
+        val row = statement.resultSet
+
+        val volumes = HashMap<String, Pair<Long, Long>>()
+        while (row.next()) {
+            val bought = row.getLong("old_bought")
+            val boughtNull = row.wasNull()
+            val sold = row.getLong("old_sold")
+            val soldNull = row.wasNull()
+            if (!boughtNull || !soldNull) {
+                volumes[row.getString("item_name")] = (if (boughtNull) 0L else bought) to (if (soldNull) 0L else sold)
+            }
+        }
+        volumes
+    }
+
     override fun setBasePrice(item: MarketItem, basePrice: Double): MarketItem? = withStatement(
         "UPDATE items SET base_price = ? WHERE item_name = ?;"
     ) { statement ->

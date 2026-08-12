@@ -14,6 +14,7 @@ class MarketReportTest {
 
     private val items = mutableListOf<MarketItem>()
     private val pricesBefore = mutableMapOf<String, Double>()
+    private val volumesBefore = mutableMapOf<String, Pair<Long, Long>>()
     private lateinit var report: MarketReport
 
     @BeforeEach
@@ -22,11 +23,16 @@ class MarketReportTest {
     }
 
     /***
-     * Only getPricesAt is ever called; the rest of Database would be 25 empty overrides.
+     * Only getPricesAt/getVolumesAt are ever called; the rest of Database would be 20-odd
+     * empty overrides.
      */
     private fun stubDatabase(): Database {
         val handler = InvocationHandler { _, method, _ ->
-            if (method.name == "getPricesAt") pricesBefore else null
+            when (method.name) {
+                "getPricesAt" -> pricesBefore
+                "getVolumesAt" -> volumesBefore
+                else -> null
+            }
         }
         return Proxy.newProxyInstance(
             Database::class.java.classLoader,
@@ -44,6 +50,19 @@ class MarketReportTest {
         item.halfLifeHours = 0.0
         items.add(item)
         pricesBefore[name] = 1.0 / (1 + percent / 100)
+    }
+
+    /***
+     * Sets up an item with a flat price (so movers/summary tests aren't disturbed) that bought
+     * and sold the given units since the window opened.
+     */
+    private fun traded(name: String, category: String, bought: Long, sold: Long, boughtThen: Long, soldThen: Long) {
+        val item = MarketItem(name, 1.0, bought, sold, 0.1, 0.0001)
+        item.category = category
+        item.halfLifeHours = 0.0
+        items.add(item)
+        pricesBefore[name] = 1.0
+        volumesBefore[name] = boughtThen to soldThen
     }
 
     @Test
@@ -146,11 +165,100 @@ class MarketReportTest {
         assertEquals("-8.0", report.itemChange(arrayOf("cobblestone")))
     }
 
+    @Test
+    fun categorySummaryAveragesTheCategoryAndTracksUpDownCounts() {
+        moved("sandstone", "stone", 10.0)
+        moved("calcite", "stone", 20.0)
+        report.refresh()
+
+        assertEquals("§fstone avg 15.0 2/0/2", report.categorySummaryLine(arrayOf("stone")))
+    }
+
+    @Test
+    fun categorySummaryIsEmptyForACategoryWithNothingTracked() {
+        report.refresh()
+
+        assertEquals("§8quiet", report.categorySummaryLine(arrayOf("nonsense")))
+    }
+
+    @Test
+    fun sentimentIsBullishOnceUpPercentClearsTheThreshold() {
+        moved("sandstone", "stone", 10.0)
+        moved("calcite", "stone", 20.0)
+        report.refresh()
+
+        assertEquals("§aBULLISH 100.0", report.sentimentLine(arrayOf("stone")))
+    }
+
+    @Test
+    fun sentimentIsBearishOnceDownPercentClearsTheThreshold() {
+        moved("cobblestone", "terrain", -8.0)
+        moved("stone", "terrain", -25.0)
+        report.refresh()
+
+        assertEquals("§cBEARISH 100.0", report.sentimentLine(arrayOf("terrain")))
+    }
+
+    @Test
+    fun sentimentIsMixedWhenNeitherSideClearsTheThreshold() {
+        moved("sandstone", "stone", 10.0)
+        moved("cobblestone", "stone", -8.0)
+        report.refresh()
+
+        assertEquals("§eMIXED 1/1", report.sentimentLine(arrayOf("stone")))
+    }
+
+    /***
+     * Percentages are a share of the movers, not of every tracked item — a couple of fallers
+     * next to a pile of flat items is bearish, not diluted down to mixed just because most of
+     * the category didn't move at all.
+     */
+    @Test
+    fun sentimentIgnoresFlatItemsWhenComputingPercentages() {
+        moved("cobblestone", "stone", -8.0)
+        moved("basalt", "stone", -25.0)
+        moved("tuff", "stone", 0.02)
+        moved("granite", "stone", -0.05)
+        report.refresh()
+
+        assertEquals("§cBEARISH 100.0", report.sentimentLine(arrayOf("stone")))
+    }
+
+    @Test
+    fun volumeLeadersRankByUnitsTradedInTheWindow() {
+        traded("wheat", "food", bought = 100, sold = 50, boughtThen = 20, soldThen = 10)
+        traded("carrot", "food", bought = 40, sold = 40, boughtThen = 30, soldThen = 30)
+        report.refresh()
+
+        assertEquals("§fWheat 120 (80/40)", report.volumeLeaderLine(arrayOf("food", "1")))
+        assertEquals("§fCarrot 20 (10/10)", report.volumeLeaderLine(arrayOf("food", "2")))
+        assertEquals("§8quiet", report.volumeLeaderLine(arrayOf("food", "3")))
+    }
+
+    @Test
+    fun volumeLeaderFallsBackToCurrentTalliesWithNoSnapshotToCompareAgainst() {
+        traded("wheat", "food", bought = 5, sold = 0, boughtThen = 5, soldThen = 0)
+        report.refresh()
+
+        assertEquals("§8quiet", report.volumeLeaderLine(arrayOf("food", "1")))
+    }
+
     private companion object {
         val SETTINGS = ReportSettings(
-            24, 0.1,
-            "<green>UP <item> <change>", "<red>DOWN <item> <change>",
-            "<green>^", "<red>v", "<gray>-", "<dark_gray>quiet",
+            windowHours = 24,
+            minChange = 0.1,
+            moverUp = "<green>UP <item> <change>",
+            moverDown = "<red>DOWN <item> <change>",
+            trendUp = "<green>^",
+            trendDown = "<red>v",
+            trendFlat = "<gray>-",
+            empty = "<dark_gray>quiet",
+            categorySummary = "<white><category> avg <avg_change> <up_count>/<down_count>/<tracked_count>",
+            sentimentBullish = "<green>BULLISH <up_percent>",
+            sentimentBearish = "<red>BEARISH <down_percent>",
+            sentimentMixed = "<yellow>MIXED <up_count>/<down_count>",
+            sentimentThreshold = 60.0,
+            volumeLeader = "<white><item> <units> (<bought>/<sold>)",
         )
     }
 }

@@ -27,6 +27,7 @@ interface Database {
     fun snapshotHistory(): Boolean
     fun pruneHistory(retentionDays: Int): Int
     fun getPricesAt(hoursAgo: Int): Map<String, Double>?
+    fun getVolumesAt(hoursAgo: Int): Map<String, Pair<Long, Long>>?
 
     @Deprecated("Redundant because of the item_history trigger")
     fun createHistoryPoint(item: MarketItem): Boolean

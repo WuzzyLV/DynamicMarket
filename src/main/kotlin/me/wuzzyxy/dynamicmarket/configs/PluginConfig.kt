@@ -29,10 +29,33 @@ class PluginConfig(plugin: DynamicMarket) {
     val REPORT_TREND_DOWN: String = string("report.trend_down", "<red>▼")
     val REPORT_TREND_FLAT: String = string("report.trend_flat", "<gray>-")
     val REPORT_EMPTY: String = string("report.empty", "")
+    val REPORT_CATEGORY_SUMMARY: String = string(
+        "report.category_summary",
+        "<white><category> <gray>avg <avg_change><white>% <green><up_count>↑ <red><down_count>↓",
+    )
+    val REPORT_SENTIMENT_BULLISH: String = string(
+        "report.sentiment_bullish",
+        "<green>Bullish <gray>- <white><up_percent>% of movers rising <gray>(<tracked_count> tracked)",
+    )
+    val REPORT_SENTIMENT_BEARISH: String = string(
+        "report.sentiment_bearish",
+        "<red>Bearish <gray>- <white><down_percent>% of movers falling <gray>(<tracked_count> tracked)",
+    )
+    val REPORT_SENTIMENT_MIXED: String = string(
+        "report.sentiment_mixed",
+        "<yellow>Mixed <gray>- <white><up_count> up <gray>/ <white><down_count> down",
+    )
+    val REPORT_SENTIMENT_THRESHOLD: Double = config.getDouble("report.sentiment_threshold_percent", 60.0)
+    val REPORT_VOLUME_LEADER: String = string(
+        "report.volume_leader",
+        "<white><item> <gray>- <white><units> <gray>traded",
+    )
 
     fun reportSettings(): ReportSettings = ReportSettings(
         REPORT_WINDOW_HOURS, REPORT_MIN_CHANGE, REPORT_MOVER_UP, REPORT_MOVER_DOWN,
         REPORT_TREND_UP, REPORT_TREND_DOWN, REPORT_TREND_FLAT, REPORT_EMPTY,
+        REPORT_CATEGORY_SUMMARY, REPORT_SENTIMENT_BULLISH, REPORT_SENTIMENT_BEARISH, REPORT_SENTIMENT_MIXED,
+        REPORT_SENTIMENT_THRESHOLD, REPORT_VOLUME_LEADER,
     )
 
     private fun string(path: String, def: String): String = config.getString(path, def) ?: def

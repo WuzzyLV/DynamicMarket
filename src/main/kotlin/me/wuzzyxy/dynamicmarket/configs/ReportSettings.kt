@@ -13,4 +13,10 @@ data class ReportSettings(
     val trendDown: String,
     val trendFlat: String,
     val empty: String,
+    val categorySummary: String,
+    val sentimentBullish: String,
+    val sentimentBearish: String,
+    val sentimentMixed: String,
+    val sentimentThreshold: Double,
+    val volumeLeader: String,
 )

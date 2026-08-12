@@ -1,0 +1,189 @@
+# Screen definitions for the market holo boards (/dmarket holo place <name> <screen>).
+#
+# A screen is ONE hologram — a single entity whose lines are stacked with newlines, not one
+# entity per line. "position"/"scale"/"background" below are that one entity's appearance;
+# "frames" is the list of pages it cycles through over time, each frame's lines rendered
+# newline-joined into it. position is an offset from where the board was placed, authored as
+# if the board is on a wall facing south (yaw 0) — placing it on any other wall rotates the
+# whole thing to match automatically.
+#
+# screens.<name>:
+#   position: {x, y, z}   # offset from the placement point (all default 0)
+#   scale: 1.0            # text size multiplier
+#   background: false     # true keeps the vanilla text background box (default transparent)
+#   frames:
+#     - hold-seconds: 8
+#       lines: [...]       # newline-joined into the one entity while this frame is showing
+#
+# A sourced line with nothing to show (e.g. rank 3 when there are only 2 movers right now) is
+# dropped entirely, not shown as a blank row — the rest of the frame just has one fewer line
+# until there's something for it. A frame with no data on ANY of its lines is skipped when
+# cycling in turn (and the whole board goes blank if every frame on it is empty right now) —
+# see "top-mover" below for the source most likely to run short of ranks.
+#
+# A line is either a plain MiniMessage string, or an object naming a live data source:
+#   {source: mover, direction: up|down, category: <name or "all">, rank: 1}
+#   {source: top-mover, category: <name or "all">, rank: 1}
+#   {source: category-summary, category: <name or "all">}
+#   {source: sentiment, category: <name or "all">}
+#   {source: volume-leader, category: <name or "all">, rank: 1}
+#
+# mover vs top-mover: `mover` fixes which bucket rank N comes from (`direction: down, rank: 2`
+# is specifically the 2nd biggest faller, blank if there's no 2nd faller right now even when
+# there's a 3rd/4th riser instead). `top-mover` ranks risers and fallers together by size, so
+# "the 4 biggest movers" always fills 4 slots with whichever the market actually has — use this
+# for a fixed-size leaderboard; use `mover` when you specifically want N of each direction.
+#
+# Every sourced line renders through a template with placeholders in <angle-brackets>, MiniMessage
+# tags included — so the text AND its colour are both set by the template:
+#   mover:            <item> <change>            e.g. "<green><item> <white>is up <green><change>%"
+#   top-mover:        <item> <change>            (same placeholders as mover)
+#   category-summary: <category> <avg_change> <up_count> <down_count> <tracked_count>
+#   sentiment:        <category> <up_percent> <down_percent> <up_count> <down_count> <tracked_count>
+#     up_percent/down_percent are a share of the MOVERS (up_count + down_count), not of
+#     tracked_count — a category that's mostly flat with a couple of one-sided movers still
+#     reads as 100% one way, tracked_count is just there for a "(N tracked)" style aside.
+#   volume-leader:    <item> <units> <bought> <sold>
+#
+# By default a sourced line uses the matching report.* template from config.yml (so every board
+# stays in sync if you tweak wording there once). To fully customise ONE line without touching
+# the global default, set `template` (mover/category-summary/volume-leader) right on that line,
+# e.g. {source: mover, direction: up, rank: 1, template: "<green>▲ <white><item> <green>+<change>%"}.
+# Two sources don't know their own sign/tier ahead of render time, so each takes multiple
+# overrides instead of one `template`:
+#   sentiment:  `bullish`, `bearish`, `mixed`
+#   top-mover:  `up`, `down`
+# Any override you leave out still falls back to config.yml.
+
+screens:
+  # A general-purpose board: cycles a top-movers page, a category-pulse page, and a
+  # most-traded page. Good default for a spot that isn't tied to one stall.
+  market_overview:
+    position: { x: 0, y: 1.6, z: 0 }
+    scale: 1.0
+    background: false
+    frames:
+      - hold-seconds: 8
+        lines:
+          - "<#edb762><bold>Market"
+          - "<#b4aea4>Top movers"
+          - ""
+          - {
+              source: top-mover, category: all, rank: 1,
+              up: "<#79b547>▲ <#dedcd1><item> <#79b547>+<change>%",
+              down: "<#e55858>▼ <#dedcd1><item> <#e55858><change>%",
+            }
+          - {
+              source: top-mover, category: all, rank: 2,
+              up: "<#79b547>▲ <#dedcd1><item> <#79b547>+<change>%",
+              down: "<#e55858>▼ <#dedcd1><item> <#e55858><change>%",
+            }
+          - {
+              source: top-mover, category: all, rank: 3,
+              up: "<#79b547>▲ <#dedcd1><item> <#79b547>+<change>%",
+              down: "<#e55858>▼ <#dedcd1><item> <#e55858><change>%",
+            }
+          - {
+              source: top-mover, category: all, rank: 4,
+              up: "<#79b547>▲ <#dedcd1><item> <#79b547>+<change>%",
+              down: "<#e55858>▼ <#dedcd1><item> <#e55858><change>%",
+            }
+      - hold-seconds: 8
+        lines:
+          - "<#edb762><bold>Market"
+          - "<#b4aea4>Pulse"
+          - ""
+          - { source: category-summary, category: all, template: "<#b4aea4>Average move: <#dedcd1><avg_change>%" }
+          - {
+              source: sentiment,
+              category: all,
+              bullish: "<#79b547>Bullish <#b4aea4>· <#dedcd1><up_percent>%<#b4aea4> of movers rising",
+              bearish: "<#e55858>Bearish <#b4aea4>· <#dedcd1><down_percent>%<#b4aea4> of movers falling",
+              mixed: "<#b4aea4>Mixed · <#79b547><up_count><#b4aea4>/<#e55858><down_count><#b4aea4> up/down",
+            }
+      - hold-seconds: 8
+        lines:
+          - "<#edb762><bold>Market"
+          - "<#b4aea4>Most traded"
+          - ""
+          - { source: volume-leader, category: all, rank: 1, template: "<#b4aea4>1. <#dedcd1><item> <#b4aea4>- <#dedcd1><units><#b4aea4> traded" }
+          - { source: volume-leader, category: all, rank: 2, template: "<#b4aea4>2. <#dedcd1><item> <#b4aea4>- <#dedcd1><units><#b4aea4> traded" }
+          - { source: volume-leader, category: all, rank: 3, template: "<#b4aea4>3. <#dedcd1><item> <#b4aea4>- <#dedcd1><units><#b4aea4> traded" }
+
+  # A smaller board meant for one NPC stall — change every "category: all" below to that
+  # stall's category (e.g. "wood") when you place it, or duplicate this screen per category.
+  stall_board:
+    position: { x: 0, y: 1.4, z: 0 }
+    scale: 0.9
+    background: false
+    frames:
+      - hold-seconds: 6
+        lines:
+          - "<#edb762><bold>Stall prices"
+          - ""
+          - { source: top-mover, category: all, rank: 1 }
+          - { source: top-mover, category: all, rank: 2 }
+      - hold-seconds: 6
+        lines:
+          - "<#edb762><bold>Stall mood"
+          - ""
+          - { source: category-summary, category: all }
+          - { source: sentiment, category: all }
+
+  # Single-line, fast rotation. For doorways, corridors, above a shop entrance —
+  # anywhere a player walks past rather than stands and reads.
+  ticker:
+    position: { x: 0, y: 2.2, z: 0 }
+    scale: 0.7
+    background: false
+    frames:
+      - hold-seconds: 4
+        lines:
+          - { source: top-mover, category: all, rank: 1 }
+      - hold-seconds: 4
+        lines:
+          - { source: top-mover, category: all, rank: 2 }
+      - hold-seconds: 4
+        lines:
+          - { source: volume-leader, category: all, rank: 1, template: "<#b4aea4>Most traded: <#dedcd1><item>" }
+
+  # Rotates one category per frame. Place near the market entrance so players can see
+  # which sector is worth walking to before they pick a stall.
+  sector_watch:
+    position: { x: 0, y: 1.6, z: 0 }
+    scale: 0.9
+    background: false
+    frames:
+      - hold-seconds: 6
+        lines:
+          - "<#edb762><bold>Sectors"
+          - "<#b4aea4>Ores"
+          - ""
+          - { source: category-summary, category: ores, template: "<#b4aea4>Average move: <#dedcd1><avg_change>%" }
+          - { source: top-mover, category: ores, rank: 1 }
+      - hold-seconds: 6
+        lines:
+          - "<#edb762><bold>Sectors"
+          - "<#b4aea4>Wood"
+          - ""
+          - { source: category-summary, category: wood, template: "<#b4aea4>Average move: <#dedcd1><avg_change>%" }
+          - { source: top-mover, category: wood, rank: 1 }
+      - hold-seconds: 6
+        lines:
+          - "<#edb762><bold>Sectors"
+          - "<#b4aea4>Farming"
+          - ""
+          - { source: category-summary, category: farming, template: "<#b4aea4>Average move: <#dedcd1><avg_change>%" }
+          - { source: top-mover, category: farming, rank: 1 }
+
+  # Two lines, no rotation. For a wall above a single stall's chest or sign —
+  # the cheapest board to place and the easiest to read at a glance.
+  glance:
+    position: { x: 0, y: 1.2, z: 0 }
+    scale: 0.8
+    background: false
+    frames:
+      - hold-seconds: 30
+        lines:
+          - { source: sentiment, category: all }
+          - { source: top-mover, category: all, rank: 1 }

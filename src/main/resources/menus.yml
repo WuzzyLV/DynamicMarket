@@ -181,8 +181,15 @@ category:
   #   Its icon is the only way to give a category a fixed icon, since a category has no traded
   #   item of its own; leave it out and the button borrows one from the category. `button: false`
   #   keeps the category off the home screen without touching the others.
+  # order: where this category sits on the home screen, low number first. Categories without one
+  #   come after every category that has one, in alphabetical order — so numbering two of them
+  #   doesn't shuffle the rest, and a new category appearing in items.yml can't push a
+  #   deliberately-placed one out of its slot. Gaps are free: 10/20/30 leaves room to slot
+  #   something in later without renumbering. Two categories on the same number fall back to
+  #   alphabetical between themselves.
   overrides:
     #masonry:
+    #  order: 10
     #  description:
     #    - "<gray>Stone, brick and everything else"
     #    - "<gray>you'd pave a road with."

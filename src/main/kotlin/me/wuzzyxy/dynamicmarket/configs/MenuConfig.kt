@@ -65,6 +65,13 @@ data class CategoryMenuConfig(
     val empty: GuiElementConfig?,
     val label: GuiElementConfig?,
     val item: GuiElementConfig?,
+    /***
+     * Where this category sits on the home screen, low to high. Categories that don't set one
+     * sort after every category that does, alphabetically among themselves, so ordering two
+     * categories doesn't silently rearrange the rest — and adding an item under a brand new
+     * category can't push a deliberately-placed one off its slot.
+     */
+    val order: Int,
 )
 
 data class ItemMenuConfig(
@@ -119,6 +126,7 @@ class MenuConfig(plugin: DynamicMarket) {
         empty = config.elementOrNull("category.empty"),
         label = config.elementOrNull("category.label"),
         item = config.elementOrNull("category.item"),
+        order = UNORDERED,
     )
 
     private val categoryOverrides = config.categoryOverrides(categoryDefaults, log)
@@ -135,6 +143,9 @@ class MenuConfig(plugin: DynamicMarket) {
     /*** The category screen as this category sees it: `category.overrides.<name>` merged over the base section, field by field. */
     fun category(name: String): CategoryMenuConfig = categoryOverrides[name.lowercase()] ?: categoryDefaults
 }
+
+/*** No `order:` in menus.yml — sorts after everything that has one. */
+private const val UNORDERED = Int.MAX_VALUE
 
 private const val ROW_SLOTS = 9
 private const val MAX_ROWS = 6
@@ -282,6 +293,7 @@ private fun ConfigurationSection.categoryOverrides(base: CategoryMenuConfig, log
             empty = override.overrideElement("empty", base.empty),
             label = override.overrideElement("label", base.label),
             item = override.overrideElement("item", base.item),
+            order = override.getInt("order", base.order),
         )
     }.toMap()
 }

@@ -52,10 +52,13 @@ class MainMenuGui(private val ctx: GuiManager) {
         val blank = emptySlotItem(menu.empty, shared, ctx.resolver)
         val hours = mapOf("hours" to report.windowHours.toString())
 
+        // menus.yml order first, then alphabetical — both for the categories nobody ordered and
+        // as the tiebreak, so two categories sharing an order still land somewhere predictable.
         val categoryButtons = ctx.manager.workingItems
             .filter { ctx.resolveIconOrWarn(it.name) != null }
             .groupBy(MarketItem::category)
-            .toSortedMap()
+            .entries
+            .sortedWith(compareBy({ ctx.menuConfig.category(it.key).order }, { it.key }))
             .mapNotNull { (category, items) -> categoryItem(category, items) }
 
         val gainerSlots = layoutSlots(layout, 'u')

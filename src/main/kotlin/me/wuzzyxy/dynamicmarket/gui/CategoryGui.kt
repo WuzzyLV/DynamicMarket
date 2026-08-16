@@ -5,65 +5,60 @@ import me.wuzzyxy.dynamicmarket.items.MarketItem
 import me.wuzzyxy.dynamicmarket.items.prettyItemName
 import xyz.xenondevs.invui.gui.Markers
 import xyz.xenondevs.invui.gui.PagedGui
-import xyz.xenondevs.invui.item.BoundItem
 import xyz.xenondevs.invui.item.Item
 import xyz.xenondevs.invui.item.ItemBuilder
 import xyz.xenondevs.invui.window.Window
 import org.bukkit.entity.Player
 
 /***
- * Item grid for one category. Layout comes from menus.yml (category.layout) — paged rather
- * than fixed slots, so a category that outgrows its window can't silently lose items off the
- * bottom the way the old DeluxeMenus config did (see temp/menu example/market*.yml).
+ * Item grid for one category. Layout, title and templates come from menus.yml, taken through
+ * MenuConfig.category() so a `category.overrides.<name>` block can give this one category its own
+ * grid or wording without restating the parts it shares. Paged rather than fixed slots, so a
+ * category that outgrows its window can't silently lose items off the bottom the way the old
+ * DeluxeMenus config did (see temp/menu example/market*.yml).
  *
- * Page nav only renders when there's actually somewhere to go: on a single-page category (the
- * common case today) both buttons stay as plain filler instead of a dead button that clicks
- * for nothing.
+ * Page nav only renders when there's actually somewhere to go, and an 'x' slot with no item left
+ * to show renders the configured empty element rather than a hole in the window.
  *
  * Registers with [GuiManager.registry] while open, so a trade made on this category's items
  * (from anyone's item screen, including this player's own) refreshes the prices shown here too.
  */
 class CategoryGui(private val ctx: GuiManager, private val category: String) {
 
-    private val menu get() = ctx.menuConfig.category
     private val shared get() = ctx.menuConfig.shared
 
     fun open(player: Player) {
-        val itemConfig = menu.item
+        val screen = ctx.menuConfig.category(category)
+        val itemConfig = screen.item
         val categoryItems = if (itemConfig != null) resolvableItems() else emptyList()
-        val content: List<Item> = if (itemConfig != null) categoryItems.map { itemButton(itemConfig, it) } else emptyList()
-
-        val prev = BoundItem.pagedBuilder()
-            .setItemProvider { _, gui -> navIcon(gui.page > 0, shared.prevPage) }
-            .addClickHandler { _, gui, _ -> if (gui.page > 0) gui.page-- }
-            .build()
-
-        val next = BoundItem.pagedBuilder()
-            .setItemProvider { _, gui -> navIcon(gui.page < gui.pageCount - 1, shared.nextPage) }
-            .addClickHandler { _, gui, _ -> if (gui.page < gui.pageCount - 1) gui.page++ }
-            .build()
+        val content = if (itemConfig == null) emptyList() else categoryItems.map { itemButton(itemConfig, it) }
 
         val displayCategory = category.replaceFirstChar(Char::uppercaseChar)
-        val label = menu.label?.let {
-            Item.simple(it.render(ctx.resolver, mapOf("category" to displayCategory, "count" to content.size.toString())))
-        }
+        val labelPlaceholders = mapOf(
+            "category" to displayCategory,
+            "count" to content.size.toString(),
+            "description" to screen.description.joinToString(" "),
+        )
+        val labelBlocks = mapOf("description" to screen.description)
 
         val gui: PagedGui<Item> = PagedGui.itemsBuilder()
-            .setStructure(*menu.layout.toTypedArray())
+            .setStructure(*screen.layout.toTypedArray())
             .addIngredient('#', fillerItem(shared.filler, ctx.resolver))
-            .addIngredient('i', label ?: fillerItem(shared.filler, ctx.resolver))
+            .addIngredient('i', buttonOrFiller(screen.label, shared.filler, ctx.resolver) { Item.simple(it.render(ctx.resolver, labelPlaceholders, blocks = labelBlocks)) })
             .addIngredient('x', Markers.CONTENT_LIST_SLOT_HORIZONTAL)
-            .addIngredient('b', navOrFiller(shared.back) { config -> backItem(config, ctx.resolver) { viewer -> ctx.openMainMenu(viewer) } })
-            .addIngredient('<', prev)
-            .addIngredient('>', next)
-            .addIngredient('c', navOrFiller(shared.close) { config -> closeItem(config, ctx.resolver) })
+            .addIngredient('b', buttonOrFiller(shared.back, shared.filler, ctx.resolver) { backItem(it, ctx.resolver) { viewer -> ctx.openMainMenu(viewer) } })
+            .addIngredient('<', prevPageItem(shared.prevPage, shared.filler, ctx.resolver))
+            .addIngredient('>', nextPageItem(shared.nextPage, shared.filler, ctx.resolver))
+            .addIngredient('c', buttonOrFiller(shared.close, shared.filler, ctx.resolver) { closeItem(it, ctx.resolver) })
+            .setBackground(emptySlotProvider(screen.empty, shared, ctx.resolver))
             .setContent(content)
             .build()
 
-        val visibleContentSlots = menu.layout.sumOf { line -> line.count { it == 'x' } }
-        if (content.size > visibleContentSlots && (shared.prevPage == null || shared.nextPage == null)) {
-            ctx.plugin.logger.warning(
-                "Category '$category' has ${content.size} items but only $visibleContentSlots fit on one page, and " +
+        val slotsPerPage = layoutSlots(screen.layout, 'x').size
+        if (content.size > slotsPerPage && (shared.prevPage == null || shared.nextPage == null)) {
+            ctx.warnOnce(
+                "category-no-page-nav-$category",
+                "Category '$category' has ${content.size} items but only $slotsPerPage fit on one page, and " +
                     "page navigation is disabled in menus.yml — the rest are unreachable from the GUI"
             )
         }
@@ -73,7 +68,7 @@ class CategoryGui(private val ctx: GuiManager, private val category: String) {
         }
 
         Window.builder()
-            .setTitle(menu.title.withPlaceholders(mapOf("category" to displayCategory)))
+            .setTitle(screen.title.withPlaceholders(mapOf("category" to displayCategory, "description" to screen.description.joinToString(" "))))
             .setUpperGui(gui)
             .addCloseHandler { ctx.registry.unregister(player.uniqueId) }
             .open(player)
@@ -84,12 +79,6 @@ class CategoryGui(private val ctx: GuiManager, private val category: String) {
         .filter { it.category == category }
         .sortedBy(MarketItem::name)
         .filter { ctx.resolveIconOrWarn(it.name) != null }
-
-    private fun navIcon(applicable: Boolean, config: GuiElementConfig?) =
-        if (applicable && config != null) config.render(ctx.resolver) else shared.filler.render(ctx.resolver).hideTooltip(true)
-
-    private fun navOrFiller(config: GuiElementConfig?, build: (GuiElementConfig) -> Item): Item =
-        config?.let(build) ?: fillerItem(shared.filler, ctx.resolver)
 
     private fun itemButton(config: GuiElementConfig, item: MarketItem): Item = Item.builder()
         .setItemProvider(itemProvider(config, item))

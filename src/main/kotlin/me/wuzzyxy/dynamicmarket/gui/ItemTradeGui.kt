@@ -12,14 +12,6 @@ import xyz.xenondevs.invui.item.ItemBuilder
 import xyz.xenondevs.invui.window.Window
 import org.bukkit.entity.Player
 
-/*** Every slot in [layout] (row-major) whose token starts with [char] — used for the repeated-but-distinct 'q' quantity slots a single addIngredient binding can't represent. */
-private fun layoutSlots(layout: List<String>, char: Char): List<Int> =
-    layout.flatMapIndexed { row, line ->
-        line.split(' ').filter(String::isNotEmpty).mapIndexedNotNull { col, token ->
-            if (token.firstOrNull() == char) row * 9 + col else null
-        }
-    }
-
 /***
  * Buy/sell screen for one item. Layout comes from menus.yml (item.layout): one button per
  * configured quantity tier (left click buys, right click sells — same dual-purpose icon the
@@ -45,22 +37,24 @@ class ItemTradeGui(private val ctx: GuiManager, private val item: MarketItem) {
             .addIngredient('#', fillerItem(shared.filler, ctx.resolver))
             // 'q' is a placeholder here — each occurrence needs a *different* quantity, which
             // a single addIngredient binding can't express, so every 'q' slot gets overwritten
-            // individually below once the Gui exists.
-            .addIngredient('q', fillerItem(shared.filler, ctx.resolver))
+            // individually below once the Gui exists. Any left over is a tier the config doesn't
+            // have, so it keeps the empty element rather than turning into a hole.
+            .addIngredient('q', emptySlotItem(menu.empty, shared, ctx.resolver))
             .addIngredient('d', displaySlot)
             .addIngredient('a', sellAllSlot)
-            .addIngredient('b', navOrFiller(shared.back) { config -> backItem(config, ctx.resolver) { viewer -> ctx.openCategory(viewer, item.category) } })
-            .addIngredient('c', navOrFiller(shared.close) { config -> closeItem(config, ctx.resolver) })
+            .addIngredient('b', buttonOrFiller(shared.back, shared.filler, ctx.resolver) { backItem(it, ctx.resolver) { viewer -> ctx.openCategory(viewer, item.category) } })
+            .addIngredient('c', buttonOrFiller(shared.close, shared.filler, ctx.resolver) { closeItem(it, ctx.resolver) })
             .build()
 
         val quantityConfig = menu.quantity
         if (quantityConfig != null) {
             val quantitySlots = layoutSlots(menu.layout, 'q')
             val quantities = ctx.shopConfig.QUANTITIES
-            if (quantities.size != quantitySlots.size) {
-                ctx.plugin.logger.warning(
-                    "shop.quantities has ${quantities.size} tier(s) but item.layout has ${quantitySlots.size} 'q' slot(s) — " +
-                        "showing ${minOf(quantities.size, quantitySlots.size)}"
+            if (quantities.size > quantitySlots.size) {
+                ctx.warnOnce(
+                    "item-quantity-slots",
+                    "shop.quantities has ${quantities.size} tier(s) but item.layout only has ${quantitySlots.size} 'q' " +
+                        "slot(s) — the last ${quantities.size - quantitySlots.size} never appear"
                 )
             }
             for ((slot, quantity) in quantitySlots.zip(quantities)) {
@@ -76,9 +70,6 @@ class ItemTradeGui(private val ctx: GuiManager, private val item: MarketItem) {
             .addCloseHandler { ctx.registry.unregister(player.uniqueId) }
             .open(player)
     }
-
-    private fun navOrFiller(config: GuiElementConfig?, build: (GuiElementConfig) -> Item): Item =
-        config?.let(build) ?: fillerItem(shared.filler, ctx.resolver)
 
     private fun track(guiItem: Item): Item {
         liveItems += guiItem

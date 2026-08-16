@@ -63,9 +63,9 @@ sell_multiplier: 0.85
 # The /market GUI. Needs Vault + an economy plugin to actually trade; without one the
 # menu still opens (browsing prices is harmless) but buy/sell/sell-all are refused.
 shop:
-  # Quantity tiers offered on an item's buy/sell screen, left to right.
+  # Quantity tiers offered on an item's buy/sell screen, left to right — as many as menus.yml
+  # gives the item screen 'q' slots for. A tier above the item's normal stack size still shows
+  # its real count on the icon, but vanilla caps that at 99, so past 99 the number the client
+  # draws is its own business and %amount% in the tier's name is what players can rely on.
   quantities: [1, 6, 12, 32, 64]
-  # Cap on how many risers/fallers the home screen shows per row. The row itself is only
-  # added at all when there's at least one mover to show — a quiet market gets a shorter menu.
-  movers_shown: 8
   sounds: true

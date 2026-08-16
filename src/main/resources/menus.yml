@@ -1,6 +1,6 @@
 # /market GUI layout and text.
 #
-# Every named element (not the layout/title/row strings) is fully optional: delete the whole
+# Every named element (not the layout/title strings) is fully optional: delete the whole
 # section and that button/slot disappears from the menu — it does NOT fall back to a default,
 # unlike a missing layout/title which does (those are structure, not something to switch off).
 # Deleting `shared.close`, for example, just means there's no close button; players can still
@@ -8,22 +8,35 @@
 # edits (including deletions) stick across updates.
 #
 # icon: a vanilla Material name, or a CraftEngine id ("namespace:value") — same rule as
-#   items.yml. Ignored on elements bound to a traded item (main.category, main.mover,
-#   category.item, item.display, item.quantity) — those always show the item's own icon, same
-#   as the chip icon in the reference bet GUI this was modelled on.
+#   items.yml. Ignored on elements bound to a traded item (main.mover, category.item,
+#   item.display, item.quantity) — those always show the item's own icon, same as the chip icon
+#   in the reference bet GUI this was modelled on. A category has no item of its own, so its
+#   home-screen button borrows one unless you name an icon under category.overrides.<name>.button.
 # name / lore: MiniMessage. %token% placeholders are substituted first, MiniMessage parses
 #   after. A lore line that is *only* one placeholder and resolves to nothing is dropped
 #   entirely rather than left blank, so an optional line (a missing mover, a hint) doesn't
-#   leave a gap.
+#   leave a gap — and a placeholder that carries several lines, like %description%, expands
+#   into all of them when it's alone on a line.
+# [group] ... [/group] in lore: a heading or a blank spacer has no placeholder to resolve, so
+#   on its own it would sit there introducing nothing. Wrap it with the lines it belongs to and
+#   the whole run disappears together unless at least one placeholder line inside it produced
+#   something. Only lines that are *only* a placeholder keep a group alive — decoration can't
+#   hold one open by itself. An unclosed [group] runs to the end of the lore.
 #
-# Layout strings are InvUI structures: 9 space-separated single characters, one per column.
-# The home screen (main.*) is the exception — its total row count is computed at runtime from
-# how many categories and movers actually exist, so there's no single fixed layout for it to
-# override. What you *can* configure there is what's inside each row: header/footer and the
-# category/gainers/fallers row templates below.
+# layout: one string per row, 9 space-separated single characters per row, max 6 rows — InvUI's
+#   own structure convention. All three screens work this way; nothing resizes itself at
+#   runtime, so the grid you write here is the grid players get. Content that outgrows its slots
+#   (categories, items) pages instead of falling off the bottom. A slot with nothing left to put
+#   in it shows that screen's `empty` element, or `shared.empty`, or plain filler if you set
+#   neither.
 
 shared:
   filler:
+    icon: GRAY_STAINED_GLASS_PANE
+    name: " "
+  # Default for content slots with nothing in them — no category on this page, no mover today,
+  # no quantity tier for that slot. Delete it and those slots look like filler.
+  empty:
     icon: GRAY_STAINED_GLASS_PANE
     name: " "
   back:
@@ -32,8 +45,8 @@ shared:
   close:
     icon: BARRIER
     name: "<red>Close"
-  # Only shown when there actually is a previous/next page — a category that fits on one page
-  # never shows either, instead of a dead button that does nothing when clicked.
+  # Only shown when there actually is a previous/next page — a menu that fits on one page never
+  # shows either, instead of a dead button that does nothing when clicked.
   prev_page:
     icon: ARROW
     name: "<green>« Previous page"
@@ -43,15 +56,24 @@ shared:
 
 main:
   title: "<dark_gray><bold>Market"
-  # s = sell everything
-  header: "# # # # # # # # s"
-  # g = one category button
-  category_row: "# g g g g g g g #"
-  # l = section label, m = one mover
-  gainers_row: "l m m m m m m m m"
-  fallers_row: "l m m m m m m m m"
-  # c = close
-  footer: "# # # # # # # # c"
+  # s = sell everything      g = category button (paged over the 'g' slots)
+  # u = a top gainer         l = gainers label
+  # d = a top faller         L = fallers label
+  # < / > = category pages   c = close        # = filler
+  #
+  # How many movers each strip shows is just how many 'u'/'d' slots you give it. On a quiet
+  # market the leftovers show `empty` below.
+  layout:
+    - "# # # # # # # # s"
+    - "# g g g g g g g #"
+    - "# g g g g g g g #"
+    - "l u u u u u u u u"
+    - "L d d d d d d d d"
+    - "# < # # # # # > c"
+  # Overrides shared.empty for this screen only. Delete to inherit it.
+  #empty:
+  #  icon: BLACK_STAINED_GLASS_PANE
+  #  name: " "
   elements:
     sell_everything:
       icon: HOPPER
@@ -71,21 +93,38 @@ main:
       name: "<red><bold>Top Fallers"
       lore:
         - "<gray>Last %hours%h"
-  # One button per category. icon is the category's representative item and can't be
-  # overridden here. %top_gainer_line% / %top_faller_line% are each a full formatted line,
-  # or empty (and dropped) when that category has nothing to report.
+  # The template for every category button in the 'g' slots. A category can restyle its own
+  # button, give it a fixed icon or drop it from this screen entirely — see category.overrides
+  # further down. Delete this section and no category gets a button at all.
+  #
+  # %description% is that category's blurb from category.overrides; on a line of its own it
+  # becomes as many lines as the blurb has, and disappears when there is none.
+  #
+  # %top_gainer_line% / %top_faller_line% are each a full formatted line for this category's
+  # biggest riser and faller. Number them to go further down the rankings —
+  # %top_gainer_line_2% is the second biggest riser, _3% the third, and an unnumbered token
+  # means rank 1. Ask for as many as you want; ranks the category hasn't got produce nothing and
+  # their lines vanish, which is what the [group] below is for: no movers at all and the spacer
+  # and heading go with them. %hours% is the report window from config.yml.
+  #
+  # Without an icon the button borrows one of the category's own items.
   category:
-    icon: CHEST
     name: "<white><bold>%category%"
     lore:
-      - "<gray>%count% item(s)"
-      - "%top_gainer_line%"
-      - "%top_faller_line%"
+      - "%description%"
+      - "[group]"
+      - " "
+      - "<dark_gray>Past %hours% hours"
+      - "%top_gainer_line_1%"
+      - "%top_gainer_line_2%"
+      - "%top_faller_line_1%"
+      - "%top_faller_line_2%"
+      - "[/group]"
       - ""
       - "<yellow>Click to browse"
-  # One button per mover in the gainers/fallers rows above.
+  # One button per mover, filling the 'u' and 'd' slots. %arrow% and %sign% already carry the
+  # direction, so one template covers both strips.
   mover:
-    icon: PAPER
     name: "<white><bold>%item%"
     lore:
       - "%arrow% %sign%%change%% <gray>(%category%)"
@@ -94,21 +133,25 @@ main:
 
 category:
   title: "<dark_gray>Market <gray>» <white>%category%"
-  # i = category label, x = item content slot (paged), b = back, < / > = page nav, c = close.
-  # 45 slots, matching the size of the original marketWood.yml-style category menus.
+  # i = category label   x = item (paged over the 'x' slots)
+  # b = back             < / > = pages    c = close    # = filler
   layout:
     - "# # # # i # # # #"
     - "# x x x x x x x #"
     - "# x x x x x x x #"
     - "# x x x x x x x #"
     - "b < # # # # # > c"
+  # What an 'x' slot shows once the page runs out of items. Overrides shared.empty here.
+  #empty:
+  #  icon: LIGHT_GRAY_STAINED_GLASS_PANE
+  #  name: "<dark_gray>Empty"
   label:
     icon: BOOK
     name: "<gold><bold>%category%"
     lore:
+      - "%description%"
       - "<gray>%count% item(s) for sale"
   item:
-    icon: BARRIER
     name: "<white><bold>%item%"
     lore:
       - "<green>✦ Buy for <gold>%buy%"
@@ -116,23 +159,70 @@ category:
       - ""
       - "<yellow>Click to browse"
 
+  # Per-category settings, keyed by the category name in items.yml. Anything you leave out is
+  # inherited from the section above — even a single field, so an override that only wants
+  # different lore doesn't have to restate the icon and name. Set an element to `false` to
+  # switch it off for this one category when the base section has it on.
+  #
+  # description: what this category *is*, in your words. Available as %description% in
+  #   main.category, category.title and category.label. One string or a list of lines; a lore
+  #   line that is only %description% turns into all of them, and vanishes when there's none, so
+  #   a category you never wrote a blurb for doesn't leave a gap.
+  # button: this category's button on the home screen — main.category with your changes on top.
+  #   Its icon is the only way to give a category a fixed icon, since a category has no traded
+  #   item of its own; leave it out and the button borrows one from the category. `button: false`
+  #   keeps the category off the home screen without touching the others.
+  overrides:
+    #masonry:
+    #  description:
+    #    - "<gray>Stone, brick and everything else"
+    #    - "<gray>you'd pave a road with."
+    #  button:
+    #    icon: BRICKS
+    #    name: "<gold><bold>Masonry"
+    #  title: "<dark_gray>Market <gray>» <white>Masonry"
+    #  layout:
+    #    - "# # # i # # # # #"
+    #    - "x x x x x x x x x"
+    #    - "x x x x x x x x x"
+    #    - "b < # # # # # > c"
+    #  label:
+    #    icon: BRICKS
+    #  item:
+    #    lore:
+    #      - "<green>✦ Buy for <gold>%buy%"
+    #      - "<red>✦ Sell for <gold>%sell%"
+    #  empty:
+    #    icon: LIGHT_GRAY_STAINED_GLASS_PANE
+    #    name: "<dark_gray>Nothing here"
+    #landscaping:
+    #  description: "<gray>Dirt, sand and gravel by the shulker."
+    #  button:
+    #    icon: GRASS_BLOCK
+    #  label: false
+
 item:
   title: "<dark_gray>Market <gray>» <white>%item%"
-  # d = item display, q = one quantity tier (as many as configs shop.quantities has slots
-  # for), b = back, a = sell all, c = close. 27 slots, matching the original marketBuyScreen.yml.
+  # d = item display   q = one quantity tier, filled left to right from config.yml's
+  #                        shop.quantities   a = sell all
+  # b = back           c = close             # = filler
   layout:
     - "# # # # d # # # #"
     - "# q q q q q q q #"
     - "b # a # # # # # c"
+  # What a 'q' slot shows when shop.quantities has no tier for it. Overrides shared.empty here.
+  #empty:
+  #  icon: LIGHT_GRAY_STAINED_GLASS_PANE
+  #  name: " "
   display:
-    icon: BARRIER
     name: "<white><bold>%item%"
     lore:
       - "<gray>Category: <white>%category%"
       - "<gray>Current price: <gold>%unit% <gray>/ unit"
       - "<gray>You're carrying: <white>%owned%"
+  # The icon carries the tier as its stack count. Vanilla tops that out at 99, so keep %amount%
+  # in the name — above 99 the number drawn on the icon is up to the client.
   quantity:
-    icon: BARRIER
     name: "<white><bold>%amount% <gray>x <white>%item%"
     lore:
       - "%afford_color%✦ Buy for <gold>%buy%"

@@ -39,6 +39,10 @@ commands:
         description: Places/removes/moves market holo boards
         usage: /dmarket holo <place|remove|move|list> ...
         permission: dynamicmarket.command.holo
+      event:
+        description: Lists, force-triggers or shows the last random market event
+        usage: /dmarket event <list|trigger [id]|last>
+        permission: dynamicmarket.command.event
   market:
     description: Opens the market shop GUI
     usage: /market [category]

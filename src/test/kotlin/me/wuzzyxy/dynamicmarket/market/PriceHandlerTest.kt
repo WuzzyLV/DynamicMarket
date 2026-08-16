@@ -115,6 +115,21 @@ class PriceHandlerTest {
         assertEquals(2 * before, prices.getUnitPrice(cobble), 1e-9)
     }
 
+    /***
+     * MarketEventManager shocks net by ln(multiplier)/k to make a random event mean exactly
+     * what its config says ("1.5x" = prices end up 1.5x). If this drifts, every event's
+     * configured strength silently lies.
+     */
+    @Test
+    fun shockingNetByLnMultiplierOverKMovesUnitPriceByExactlyThatMultiplier() {
+        val cobble = MarketItem("cobblestone", 0.6, 0, 0, 0.04, ln(2.0) / 20_000).apply { halfLifeHours = 0.0 }
+        val before = prices.getUnitPrice(cobble)
+
+        cobble.applyShock(ln(1.5) / cobble.k)
+
+        assertEquals(1.5 * before, prices.getUnitPrice(cobble), 1e-9)
+    }
+
     @Test
     fun netHalvesOverOneHalfLife() {
         val cobble = decayingCobblestone()

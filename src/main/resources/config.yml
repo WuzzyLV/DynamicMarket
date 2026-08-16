@@ -54,6 +54,29 @@ report:
   # Units bought+sold within the report window, ranked per category (or "all"). <item>, <units>,
   # <bought>, <sold>.
   volume_leader: "<white><item> <gray>- <white><units> <gray>traded"
+events:
+  # Master switch — the trigger timer doesn't even start when this is false.
+  enabled: true
+  # How often the trigger timer rolls the dice. Independent of how strong or how likely
+  # any single roll is — see chance_percent/cooldown_minutes.
+  check_interval_seconds: 300
+  # Chance an event fires on any one roll that isn't blocked by the cooldown below.
+  chance_percent: 8
+  # Minimum gap after an event fires before the next roll can succeed, however lucky it gets.
+  cooldown_minutes: 60
+  # Server-wide chat broadcast when an event fires, using that event's `message` in events.yml.
+  broadcast: true
+  # The /market home screen swaps a category's top-movers block for the firing event's
+  # `badge` (events.yml) while the event is still meaningfully in effect — capped at this
+  # many hours regardless of how slowly the item's own half_life_hours would otherwise heal it.
+  max_display_hours: 24
+  # ...or hidden sooner than that, once the event's remaining price impact on every item it
+  # touched has decayed back under this percent — whichever comes first.
+  revert_threshold_percent: 0.5
+  # How long fired events stay in the database once they're no longer displayed anywhere —
+  # audit/debug only (`/dmarket event last`). 0 keeps everything forever.
+  retention_days: 14
+
 # Fraction of the buy price you get back when selling. This used to be the only thing
 # standing between the market and a round-trip profit, and it was not enough. Pricing
 # along the curve handles that now, so the spread is free to be something players will

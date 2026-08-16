@@ -1,6 +1,7 @@
 package me.wuzzyxy.dynamicmarket.database
 
 import me.wuzzyxy.dynamicmarket.items.MarketItem
+import me.wuzzyxy.dynamicmarket.market.StoredMarketEvent
 
 /***
  * Every read and write answers null (or false/0) when the query blew up — the warning is
@@ -28,6 +29,19 @@ interface Database {
     fun pruneHistory(retentionDays: Int): Int
     fun getPricesAt(hoursAgo: Int): Map<String, Double>?
     fun getVolumesAt(hoursAgo: Int): Map<String, Pair<Long, Long>>?
+
+    fun recordEvent(
+        definitionId: String,
+        scope: String,
+        target: String?,
+        direction: String,
+        multiplier: Double,
+        triggeredAt: Long,
+        itemDeltas: Map<String, Double>,
+    ): Long?
+
+    fun getRecentEvents(sinceMillis: Long): List<StoredMarketEvent>?
+    fun pruneEvents(retentionDays: Int): Int
 
     @Deprecated("Redundant because of the item_history trigger")
     fun createHistoryPoint(item: MarketItem): Boolean

@@ -31,10 +31,20 @@ class CommandCompleter(
                 matches += "1"
             }
         }
+
+        if (args[0] == "event") {
+            if (args.size == 2) {
+                StringUtil.copyPartialMatches(args[1], EVENT_ACTIONS, matches)
+            } else if (args.size == 3 && args[1].equals("trigger", ignoreCase = true)) {
+                // Read live: events.yml can add/remove definitions after this completer was built.
+                StringUtil.copyPartialMatches(args[2], marketManager.eventManager.definitions.map { it.id }, matches)
+            }
+        }
         return matches
     }
 
     private companion object {
         val TAKE_AN_ITEM = setOf("buy", "sell", "debug", "set")
+        val EVENT_ACTIONS = listOf("list", "trigger", "last")
     }
 }

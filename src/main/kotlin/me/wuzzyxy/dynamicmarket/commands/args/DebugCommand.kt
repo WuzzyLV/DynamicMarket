@@ -36,7 +36,7 @@ class DebugCommand(
         sender.sendMessage(
             ChatColor.translateAlternateColorCodes(
                 '&',
-                "&7Net: &a" + String.format("%.1f", item.getNet()) +
+                "&7Net: &a" + String.format("%.1f", item.peekNet()) +
                     "&7  Unit: &a" + String.format("%.4f", priceHandler.getUnitPrice(item)) +
                     "&7  Stack: &a" + String.format("%.2f", priceHandler.getBuyPrice(item, 64))
             )

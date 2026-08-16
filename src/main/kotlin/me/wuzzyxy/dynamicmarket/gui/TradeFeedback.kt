@@ -5,6 +5,7 @@ import me.wuzzyxy.dynamicmarket.economy.VaultEconomyService
 import me.wuzzyxy.dynamicmarket.items.prettyItemName
 import me.wuzzyxy.dynamicmarket.market.SweepResult
 import me.wuzzyxy.dynamicmarket.market.TradeResult
+import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.minimessage.MiniMessage
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver
@@ -65,15 +66,24 @@ fun Player.announceSweep(result: SweepResult, economy: VaultEconomyService, conf
         return
     }
 
-    sendMini("<gold><bold>Sold everything:")
+    // One message, not one per line — a sweep across a full items.yml was otherwise thirty-odd
+    // chat packets for a single click. Still deserialized per line so prices keep going through
+    // unparsed and an economy plugin's formatting can't be read as MiniMessage.
+    val breakdown = Component.text().append(MINI.deserialize("<gold><bold>Sold everything:"))
     for (line in result.lines) {
-        sendMini(
-            "  <gray>- <white><amount> <gray>x <white><item> <gray>» <gold><price>",
-            Placeholder.unparsed("amount", line.amount.toString()),
-            Placeholder.unparsed("item", prettyItemName(line.item.name)),
-            Placeholder.unparsed("price", economy.format(line.price)),
+        breakdown.append(Component.newline()).append(
+            MINI.deserialize(
+                "  <gray>- <white><amount> <gray>x <white><item> <gray>» <gold><price>",
+                Placeholder.unparsed("amount", line.amount.toString()),
+                Placeholder.unparsed("item", prettyItemName(line.item.name)),
+                Placeholder.unparsed("price", economy.format(line.price)),
+            )
         )
     }
-    sendMini("<green>Total: <gold><total>", Placeholder.unparsed("total", economy.format(result.total)))
+    breakdown.append(Component.newline()).append(
+        MINI.deserialize("<green>Total: <gold><total>", Placeholder.unparsed("total", economy.format(result.total)))
+    )
+
+    sendMessage(breakdown.build())
     playFeedback(config, Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.5f)
 }

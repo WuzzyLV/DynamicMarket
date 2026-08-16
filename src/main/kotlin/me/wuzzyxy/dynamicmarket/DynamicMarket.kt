@@ -3,6 +3,7 @@ package me.wuzzyxy.dynamicmarket
 import me.wuzzyxy.dynamicmarket.board.HoloBoardManager
 import me.wuzzyxy.dynamicmarket.commands.DMarketCommand
 import me.wuzzyxy.dynamicmarket.commands.MarketMenuCommand
+import me.wuzzyxy.dynamicmarket.configs.EventConfig
 import me.wuzzyxy.dynamicmarket.configs.ItemConfig
 import me.wuzzyxy.dynamicmarket.configs.MenuConfig
 import me.wuzzyxy.dynamicmarket.configs.PluginConfig
@@ -14,9 +15,6 @@ import me.wuzzyxy.dynamicmarket.gui.GuiManager
 import me.wuzzyxy.dynamicmarket.items.ItemResolver
 import me.wuzzyxy.dynamicmarket.market.MarketManager
 import me.wuzzyxy.dynamicmarket.market.MarketTradeService
-import me.wuzzyxy.dynamicmarket.placeholders.BuyPriceExpansion
-import me.wuzzyxy.dynamicmarket.placeholders.MarketExpansion
-import me.wuzzyxy.dynamicmarket.placeholders.SellPriceExpansion
 import org.bukkit.plugin.java.JavaPlugin
 import xyz.xenondevs.invui.InvUI
 import java.io.IOException
@@ -28,6 +26,9 @@ class DynamicMarket : JavaPlugin() {
         private set
 
     lateinit var itemConfig: ItemConfig
+        private set
+
+    lateinit var eventConfig: EventConfig
         private set
 
     lateinit var shopConfig: ShopConfig
@@ -55,6 +56,7 @@ class DynamicMarket : JavaPlugin() {
         // CONFIGS
         pluginConfig = PluginConfig(this)
         itemConfig = ItemConfig(this)
+        eventConfig = EventConfig(this)
         shopConfig = ShopConfig(this)
         menuConfig = MenuConfig(this)
 
@@ -91,22 +93,6 @@ class DynamicMarket : JavaPlugin() {
             it.setExecutor(marketCommand)
             it.tabCompleter = marketCommand
         }
-
-        //Placeholders
-        if (server.pluginManager.getPlugin("PlaceholderAPI") != null) {
-            BuyPriceExpansion(this, marketManager, marketManager.priceHandler).register()
-            SellPriceExpansion(this, marketManager, marketManager.priceHandler).register()
-
-            val report = marketManager.report
-            MarketExpansion(this, "DMMover", report::moverLine).register()
-            MarketExpansion(this, "DMMoverItem", report::moverItem).register()
-            MarketExpansion(this, "DMMoverChange", report::moverChange).register()
-            MarketExpansion(this, "DMChange", report::itemChange).register()
-            MarketExpansion(this, "DMTrend", report::itemTrend).register()
-            MarketExpansion(this, "DMCategorySummary", report::categorySummaryLine).register()
-            MarketExpansion(this, "DMSentiment", report::sentimentLine).register()
-            MarketExpansion(this, "DMVolume", report::volumeLeaderLine).register()
-        }
     }
 
     /***
@@ -128,6 +114,8 @@ class DynamicMarket : JavaPlugin() {
     fun getSQLScripts(): List<String> = listOf(
         readResource("sql/items.sql"),
         readResource("sql/item_history.sql"),
+        readResource("sql/market_events.sql"),
+        readResource("sql/market_event_items.sql"),
     )
 
     /***
@@ -153,6 +141,7 @@ class DynamicMarket : JavaPlugin() {
         reloadConfig()
         pluginConfig = PluginConfig(this)
         itemConfig = ItemConfig(this)
+        eventConfig = EventConfig(this)
         shopConfig = ShopConfig(this)
         menuConfig = MenuConfig(this)
         marketManager.reload()

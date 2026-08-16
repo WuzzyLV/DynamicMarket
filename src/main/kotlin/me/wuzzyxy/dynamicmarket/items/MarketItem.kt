@@ -47,12 +47,26 @@ class MarketItem(
      */
     fun getNet(): Double {
         val now = System.currentTimeMillis()
-        if (halfLifeHours > 0 && now > lastDecay) {
-            netPosition *= 0.5.pow((now - lastDecay) / (halfLifeHours * 3_600_000.0))
-        }
+        netPosition = decayedAt(now)
         lastDecay = now
         return netPosition
     }
+
+    /***
+     * The same number without writing it back, for callers that are only quoting a price.
+     * [getNet] settling on read made every GUI render and every placeholder a writer, which
+     * is harmless on one thread and a lost update on two — a decay write landing on top of
+     * a recordBuy silently swallows the trade. Anything that only wants to *read* the
+     * position wants this; only trades, shocks and the DB push should be moving it.
+     */
+    fun peekNet(): Double = decayedAt(System.currentTimeMillis())
+
+    private fun decayedAt(now: Long): Double =
+        if (halfLifeHours > 0 && now > lastDecay) {
+            netPosition * 0.5.pow((now - lastDecay) / (halfLifeHours * 3_600_000.0))
+        } else {
+            netPosition
+        }
 
     fun recordBuy(amount: Int) {
         getNet()
@@ -64,6 +78,16 @@ class MarketItem(
         getNet()
         netPosition -= amount
         soldAmount += amount
+    }
+
+    /***
+     * A synthetic market event, not a trade — moves net the same way a trade would (so it
+     * prices and decays identically) but leaves boughtAmount/soldAmount alone, since those
+     * feed the DB history trigger and volume analytics and nothing was actually bought or sold.
+     */
+    fun applyShock(delta: Double) {
+        getNet()
+        netPosition += delta
     }
 
     /***

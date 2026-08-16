@@ -7,12 +7,12 @@ import kotlin.math.expm1
 class PriceHandler(var sellMultiplier: Double) {
 
     fun getBuyPrice(item: MarketItem, amount: Int): Double {
-        val net = item.getNet()
+        val net = item.peekNet()
         return curveArea(item, net + amount) - curveArea(item, net)
     }
 
     fun getSellPrice(item: MarketItem, amount: Int): Double {
-        val net = item.getNet()
+        val net = item.peekNet()
         return (curveArea(item, net) - curveArea(item, net - amount)) * sellMultiplier
     }
 
@@ -20,7 +20,7 @@ class PriceHandler(var sellMultiplier: Double) {
      * What one more unit costs right now. Signage only — never charge with this, the
      * whole point is that a batch does not get priced at a single point on the curve.
      */
-    fun getUnitPrice(item: MarketItem): Double = item.basePrice * exp(item.k * item.getNet())
+    fun getUnitPrice(item: MarketItem): Double = item.basePrice * exp(item.k * item.peekNet())
 }
 
 /***

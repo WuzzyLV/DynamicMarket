@@ -18,7 +18,9 @@ fun PlayerInventory.freeCapacityFor(stack: ItemStack): Int {
         val existing = getItem(slot)
         free += when {
             existing == null || existing.type.isAir -> maxStack
-            existing.isSimilar(stack) -> maxStack - existing.amount
+            // Another plugin's overstacked slot would otherwise report negative room and eat
+            // into the total, refusing a purchase that fits perfectly well elsewhere.
+            existing.isSimilar(stack) -> (maxStack - existing.amount).coerceAtLeast(0)
             else -> 0
         }
     }

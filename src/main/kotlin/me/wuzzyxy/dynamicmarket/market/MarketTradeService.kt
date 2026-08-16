@@ -58,18 +58,23 @@ class MarketTradeService(
         val undelivered = player.inventory.addItem(icon).values.sumOf { it.amount }
         val delivered = amount - undelivered
         if (delivered <= 0) {
-            economy.deposit(player, price)
-            return TradeResult.Denied("You don't have room for any of that — nothing was charged")
+            // Only promise the refund landed if it actually did — a full balance can bounce it.
+            return TradeResult.Denied(
+                if (economy.deposit(player, price)) "You don't have room for any of that — nothing was charged"
+                else "You don't have room for any of that, and refunding ${economy.format(price)} failed — tell an admin"
+            )
         }
 
         // Prices are along a curve, not flat per unit, so a partial refund has to be the real
         // cost of the delivered amount (recomputed off the same starting position, since
         // recordBuy hasn't moved it yet) — not a proportional share of the full-amount price.
         val actualPrice = if (undelivered > 0) priceHandler.getBuyPrice(item, delivered) else price
-        if (undelivered > 0) economy.deposit(player, price - actualPrice)
+        // If that refund bounces they kept the full charge, so the full charge is what gets
+        // reported back — quoting them the discounted price would just be wrong.
+        val charged = if (undelivered > 0 && !economy.deposit(player, price - actualPrice)) price else actualPrice
 
         item.recordBuy(delivered)
-        return TradeResult.Bought(item, delivered, actualPrice)
+        return TradeResult.Bought(item, delivered, charged)
     }
 
     fun sell(player: Player, item: MarketItem, amount: Int): TradeResult {
@@ -88,7 +93,12 @@ class MarketTradeService(
         return sellExact(player, item, owned)
     }
 
-    /*** Sweeps every configured item the player is carrying and sells all of it, in one go. */
+    /***
+     * Sweeps every configured item the player is carrying and sells all of it, in one go.
+     * Takes and prices everything first, then pays once: going through sellExact per item
+     * meant one economy transaction and one chat line for every item in items.yml on a
+     * single click, which is the most expensive thing a player can make this plugin do.
+     */
     fun sellEverything(player: Player): SweepResult {
         if (!economy.available) {
             return SweepResult(emptyList(), 0.0, "The shop's economy isn't available right now")
@@ -99,10 +109,25 @@ class MarketTradeService(
             val owned = player.inventory.countMatching(resolver, item.name)
             if (owned <= 0) continue
 
-            val result = sellExact(player, item, owned)
-            if (result is TradeResult.Sold) lines += SaleLine(result.item, result.amount, result.price)
+            val removed = player.inventory.removeMatching(resolver, item.name, owned)
+            if (removed <= 0) continue
+
+            // Priced before anything is recorded, but each item's curve only answers to its
+            // own net and every item appears once, so this is the same money as one at a time.
+            lines += SaleLine(item, removed, priceHandler.getSellPrice(item, removed))
         }
-        return SweepResult(lines, lines.sumOf { it.price })
+        if (lines.isEmpty()) return SweepResult(emptyList(), 0.0)
+
+        val total = lines.sumOf { it.price }
+        if (!economy.deposit(player, total)) {
+            lines.forEach { giveBack(player, it.item, it.amount) }
+            return SweepResult(emptyList(), 0.0, "Payment failed, your items were returned")
+        }
+
+        // Nothing moves the curve until the money has landed, so a bounced payout leaves the
+        // market exactly where it was rather than booking sales nobody was paid for.
+        lines.forEach { it.item.recordSell(it.amount) }
+        return SweepResult(lines, total)
     }
 
     /***
@@ -122,15 +147,23 @@ class MarketTradeService(
 
         val price = priceHandler.getSellPrice(item, removed)
         if (!economy.deposit(player, price)) {
-            // Payment failed after the items were already taken — hand back exactly what was
-            // removed rather than leave the player short for nothing. This can't be abused to
-            // create value: it returns precisely the stack it just took, never more.
-            val refund = resolver.resolve(item.name, removed)
-            if (refund != null) player.inventory.addItem(refund)
+            giveBack(player, item, removed)
             return TradeResult.Denied("Payment failed, your items were returned")
         }
 
         item.recordSell(removed)
         return TradeResult.Sold(item, removed, price)
+    }
+
+    /***
+     * Undo for a payout that bounced after the items were already taken. Never creates value —
+     * it hands back the same count of the same item and nothing else. Note *the same item*, not
+     * the same stack: it's rebuilt from the id, so durability, a custom name or a shulker's
+     * contents don't survive the round trip. Fine while the shop lists plain stackables, and
+     * the reason ItemResolver.matches only looks at the material in the first place.
+     */
+    private fun giveBack(player: Player, item: MarketItem, amount: Int) {
+        val stack = resolver.resolve(item.name, amount) ?: return
+        player.inventory.addItem(stack)
     }
 }

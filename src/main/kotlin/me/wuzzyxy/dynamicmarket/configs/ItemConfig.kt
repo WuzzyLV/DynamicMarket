@@ -49,6 +49,18 @@ class ItemConfig(private val plugin: DynamicMarket) {
     private fun impactK(path: String): Double {
         val unitsToDouble = config.getDouble(path + "units_to_double", 0.0)
         if (unitsToDouble > 0) return ln(2.0) / unitsToDouble
-        return config.getDouble(path + "percentage")
+
+        val percentage = config.getDouble(path + "percentage", 0.0)
+        if (percentage > 0) return percentage
+
+        val item = path.trimEnd('.')
+        if (percentage < 0) {
+            // Negative k runs the curve backwards: buying would make the item cheaper and
+            // selling would make it dearer, which is a money printer, not a cheap shop.
+            plugin.logger.warning("$item has a negative percentage, which inverts the price curve — treating it as no impact")
+        } else {
+            plugin.logger.warning("$item sets neither units_to_double nor percentage — its price will never move")
+        }
+        return 0.0
     }
 }

@@ -15,7 +15,22 @@ class PluginConfig(plugin: DynamicMarket) {
     val SOCKET_TIMEOUT_MS: Int = config.getInt("mysql.socket_timeout_ms", 15000)
 
     val PUSH_INTERVAL: Int = config.getInt("push_interval")
-    val SELL_MULTIPLIER: Double = config.getDouble("sell_multiplier")
+
+    /***
+     * The spread, and the one knob where a typo is an economy exploit rather than a mispriced
+     * shop: at 1.0 there is nothing between buying and selling back, and above it every round
+     * trip mints money. Missing from an older config.yml — saveDefaultConfig won't rewrite one
+     * that already exists — it would otherwise read as 0.0 and silently pay nothing for sales.
+     */
+    val SELL_MULTIPLIER: Double = run {
+        val configured = config.getDouble("sell_multiplier", DEFAULT_SELL_MULTIPLIER)
+        if (configured > 0.0 && configured < 1.0) return@run configured
+
+        plugin.logger.warning(
+            "sell_multiplier is $configured, which has to sit between 0 and 1 — falling back to $DEFAULT_SELL_MULTIPLIER"
+        )
+        DEFAULT_SELL_MULTIPLIER
+    }
 
     val HISTORY_SNAPSHOT_MINUTES: Int = config.getInt("history.snapshot_minutes", 30)
     val HISTORY_RETENTION_DAYS: Int = config.getInt("history.retention_days", 90)
@@ -51,6 +66,15 @@ class PluginConfig(plugin: DynamicMarket) {
         "<white><item> <gray>- <white><units> <gray>traded",
     )
 
+    val EVENTS_ENABLED: Boolean = config.getBoolean("events.enabled", true)
+    val EVENTS_CHECK_INTERVAL_SECONDS: Int = config.getInt("events.check_interval_seconds", 300)
+    val EVENTS_CHANCE_PERCENT: Double = config.getDouble("events.chance_percent", 8.0)
+    val EVENTS_COOLDOWN_MINUTES: Int = config.getInt("events.cooldown_minutes", 60)
+    val EVENTS_BROADCAST: Boolean = config.getBoolean("events.broadcast", true)
+    val EVENTS_MAX_DISPLAY_HOURS: Int = config.getInt("events.max_display_hours", 24)
+    val EVENTS_REVERT_THRESHOLD: Double = config.getDouble("events.revert_threshold_percent", 0.5)
+    val EVENTS_RETENTION_DAYS: Int = config.getInt("events.retention_days", 14)
+
     fun reportSettings(): ReportSettings = ReportSettings(
         REPORT_WINDOW_HOURS, REPORT_MIN_CHANGE, REPORT_MOVER_UP, REPORT_MOVER_DOWN,
         REPORT_TREND_UP, REPORT_TREND_DOWN, REPORT_TREND_FLAT, REPORT_EMPTY,
@@ -59,4 +83,8 @@ class PluginConfig(plugin: DynamicMarket) {
     )
 
     private fun string(path: String, def: String): String = config.getString(path, def) ?: def
+
+    private companion object {
+        const val DEFAULT_SELL_MULTIPLIER = 0.85
+    }
 }

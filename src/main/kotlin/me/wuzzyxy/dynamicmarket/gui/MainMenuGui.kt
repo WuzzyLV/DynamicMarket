@@ -133,14 +133,19 @@ class MainMenuGui(private val ctx: GuiManager) {
         val screen = ctx.menuConfig.category(category)
         val button = screen.button ?: return null
         val description = screen.description
+        val eventLines = ctx.manager.eventManager.activeEventLines(category)
 
         val placeholders = buildMap {
             put("category", category.replaceFirstChar(Char::uppercaseChar))
             put("count", items.size.toString())
             put("description", description.joinToString(" "))
             put("hours", ctx.manager.report.windowHours.toString())
-            putMoverLines(button, category, "gainer", "up", rising = true)
-            putMoverLines(button, category, "faller", "down", rising = false)
+            // A still-visible random event takes over this category's movers block rather
+            // than sharing it — otherwise both would render side by side in the same group.
+            if (eventLines.isEmpty()) {
+                putMoverLines(button, category, "gainer", "up", rising = true)
+                putMoverLines(button, category, "faller", "down", rising = false)
+            }
         }
 
         return Item.builder()
@@ -149,7 +154,7 @@ class MainMenuGui(private val ctx: GuiManager) {
                     ctx.resolver,
                     placeholders,
                     iconOverride = categoryIcon(button, category, items),
-                    blocks = mapOf("description" to description),
+                    blocks = mapOf("description" to description, "event_line" to eventLines),
                 )
             )
             .addClickHandler { click -> ctx.openCategory(click.player(), category) }

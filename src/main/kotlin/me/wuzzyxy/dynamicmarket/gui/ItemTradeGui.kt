@@ -62,12 +62,13 @@ class ItemTradeGui(private val ctx: GuiManager, private val item: MarketItem) {
             }
         }
 
-        ctx.registry.register(player.uniqueId, setOf(item.name), liveItems)
-
+        // Registering has to happen in the open handler, not before open(): InvUI closes the
+        // screen we came from partway through open(), and that fires its close handler.
         Window.builder()
             .setTitle(menu.title.withPlaceholders(mapOf("item" to prettyItemName(item.name))))
             .setUpperGui(gui)
-            .addCloseHandler { ctx.registry.unregister(player.uniqueId) }
+            .addOpenHandler { ctx.registry.register(player.uniqueId, setOf(item.name), liveItems) }
+            .addCloseHandler { ctx.registry.unregister(player.uniqueId, liveItems) }
             .open(player)
     }
 

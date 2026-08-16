@@ -14,6 +14,7 @@ class MarketManager(private val plugin: DynamicMarket, private val database: Dat
     val databaseHandler: MarketDatabaseHandler
     val priceHandler: PriceHandler
     val report: MarketReport
+    val eventManager: MarketEventManager
 
     private var reportTask = NO_TASK
 
@@ -32,6 +33,9 @@ class MarketManager(private val plugin: DynamicMarket, private val database: Dat
 
         reconcileWithConfig(plugin.itemConfig, this, plugin.logger)
         startReportTask()
+
+        // Constructed last: it reads plugin.eventConfig and the just-reconciled workingItems.
+        eventManager = MarketEventManager(plugin, database, { workingItems })
     }
 
     /***
@@ -50,6 +54,7 @@ class MarketManager(private val plugin: DynamicMarket, private val database: Dat
 
         databaseHandler.restartTasks()
         startReportTask()
+        eventManager.reload()
     }
 
     private fun startReportTask() {

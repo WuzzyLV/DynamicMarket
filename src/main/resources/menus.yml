@@ -107,6 +107,11 @@ main:
   # their lines vanish, which is what the [group] below is for: no movers at all and the spacer
   # and heading go with them. %hours% is the report window from config.yml.
   #
+  # %event_line% is one or more lines (events.yml's `badge`) for a random event still
+  # meaningfully moving prices in this category — see the `events:` block in config.yml for
+  # how long that lasts. It takes over this slot instead of the movers above while it's live,
+  # so both never show at once.
+  #
   # Without an icon the button borrows one of the category's own items.
   category:
     name: "<white><bold>%category%"
@@ -119,6 +124,7 @@ main:
       - "%top_gainer_line_2%"
       - "%top_faller_line_1%"
       - "%top_faller_line_2%"
+      - "%event_line%"
       - "[/group]"
       - ""
       - "<yellow>Click to browse"
@@ -156,6 +162,9 @@ category:
     lore:
       - "<green>✦ Buy for <gold>%buy%"
       - "<red>✦ Sell for <gold>%sell%"
+      # A still-live random event touching this specific item — see main.category's
+      # %event_line% doc above. Blank (and gone) on every item not currently affected.
+      - "%event_line%"
       - ""
       - "<yellow>Click to browse"
 

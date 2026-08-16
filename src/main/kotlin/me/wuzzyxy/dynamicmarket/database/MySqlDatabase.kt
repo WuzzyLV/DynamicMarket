@@ -3,6 +3,7 @@ package me.wuzzyxy.dynamicmarket.database
 import com.mysql.cj.jdbc.MysqlDataSource
 import me.wuzzyxy.dynamicmarket.DynamicMarket
 import me.wuzzyxy.dynamicmarket.items.MarketItem
+import me.wuzzyxy.dynamicmarket.market.StoredMarketEvent
 import java.io.IOException
 import java.net.ConnectException
 import java.net.SocketTimeoutException
@@ -11,6 +12,7 @@ import java.sql.Connection
 import java.sql.PreparedStatement
 import java.sql.ResultSet
 import java.sql.SQLException
+import java.sql.Statement
 
 class MySqlDatabase @Throws(SQLException::class, IOException::class) constructor(
     private val plugin: DynamicMarket,
@@ -327,6 +329,112 @@ class MySqlDatabase @Throws(SQLException::class, IOException::class) constructor
             }
         }
         volumes
+    }
+
+    override fun recordEvent(
+        definitionId: String,
+        scope: String,
+        target: String?,
+        direction: String,
+        multiplier: Double,
+        triggeredAt: Long,
+        itemDeltas: Map<String, Double>,
+    ): Long? = try {
+        val eventId = connection().prepareStatement(
+            "INSERT INTO market_events (definition_id, scope, target, direction, multiplier, triggered_at)" +
+                " VALUES (?, ?, ?, ?, ?, ?);",
+            Statement.RETURN_GENERATED_KEYS,
+        ).use { statement ->
+            statement.setString(1, definitionId)
+            statement.setString(2, scope)
+            statement.setString(3, target)
+            statement.setString(4, direction)
+            statement.setDouble(5, multiplier)
+            statement.setLong(6, triggeredAt)
+            statement.executeUpdate()
+            statement.generatedKeys.use { keys -> if (keys.next()) keys.getLong(1) else null }
+        }
+
+        if (eventId != null && itemDeltas.isNotEmpty()) {
+            connection().prepareStatement(
+                "INSERT INTO market_event_items (event_id, item_name, applied_delta) VALUES (?, ?, ?);"
+            ).use { statement ->
+                for ((item, delta) in itemDeltas) {
+                    statement.setLong(1, eventId)
+                    statement.setString(2, item)
+                    statement.setDouble(3, delta)
+                    statement.addBatch()
+                }
+                statement.executeBatch()
+            }
+        }
+        eventId
+    } catch (failure: SQLException) {
+        logger.warning(failure.message)
+        null
+    }
+
+    /***
+     * One row per (event, item), so an event with several targets comes back over several
+     * rows — grouped back into one StoredMarketEvent per event_id, in trigger order.
+     */
+    override fun getRecentEvents(sinceMillis: Long): List<StoredMarketEvent>? = withStatement(
+        "SELECT e.event_id, e.definition_id, e.scope, e.target, e.direction, e.multiplier, e.triggered_at," +
+            " i.item_name, i.applied_delta" +
+            " FROM market_events e" +
+            " LEFT JOIN market_event_items i ON i.event_id = e.event_id" +
+            " WHERE e.triggered_at >= ?" +
+            " ORDER BY e.event_id;"
+    ) { statement ->
+        data class Header(
+            val definitionId: String,
+            val scope: String,
+            val target: String?,
+            val direction: String,
+            val multiplier: Double,
+            val triggeredAt: Long,
+        )
+
+        statement.setLong(1, sinceMillis)
+        statement.execute()
+        val row = statement.resultSet
+
+        val headers = LinkedHashMap<Long, Header>()
+        val deltas = HashMap<Long, MutableMap<String, Double>>()
+        while (row.next()) {
+            val eventId = row.getLong("event_id")
+            headers.getOrPut(eventId) {
+                Header(
+                    row.getString("definition_id"),
+                    row.getString("scope"),
+                    row.getString("target"),
+                    row.getString("direction"),
+                    row.getDouble("multiplier"),
+                    row.getLong("triggered_at"),
+                )
+            }
+            val itemName = row.getString("item_name")
+            if (itemName != null) {
+                deltas.getOrPut(eventId) { LinkedHashMap() }[itemName] = row.getDouble("applied_delta")
+            }
+        }
+
+        headers.map { (id, header) ->
+            StoredMarketEvent(
+                id, header.definitionId, header.scope, header.target,
+                header.direction, header.multiplier, header.triggeredAt, deltas[id].orEmpty(),
+            )
+        }
+    }
+
+    override fun pruneEvents(retentionDays: Int): Int {
+        if (retentionDays <= 0) return 0
+        return withStatement(
+            "DELETE FROM market_events WHERE triggered_at < ?;"
+        ) { statement ->
+            statement.setLong(1, System.currentTimeMillis() - retentionDays * 86_400_000L)
+            statement.executeUpdate()
+        } ?: 0
     }
 
     override fun setBasePrice(item: MarketItem, basePrice: Double): MarketItem? = withStatement(

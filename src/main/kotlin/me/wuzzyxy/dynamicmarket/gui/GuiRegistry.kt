@@ -10,7 +10,7 @@ import java.util.UUID
  *
  * A player can only have one window open at a time, so registering a session always replaces
  * whatever this player had open before, and closing a window (or opening one that doesn't
- * show live prices, like the home screen) clears it — see the addCloseHandler in
+ * show live prices, like the home screen) clears it — see the handlers in
  * ItemTradeGui/CategoryGui.
  */
 class GuiRegistry {
@@ -23,8 +23,14 @@ class GuiRegistry {
         sessions[player] = Session(itemNames, liveItems)
     }
 
-    fun unregister(player: UUID) {
-        sessions.remove(player)
+    /***
+     * [liveItems] says which screen is asking. InvUI closes the outgoing window from inside
+     * the incoming one's open(), so a close handler that cleared unconditionally would wipe
+     * whatever the screen being opened had just registered — only the screen that still owns
+     * the session gets to drop it.
+     */
+    fun unregister(player: UUID, liveItems: List<Item>) {
+        if (sessions[player]?.liveItems === liveItems) sessions.remove(player)
     }
 
     /*** Refreshes every open window showing [itemName], other than [exclude] (which already refreshed itself). */

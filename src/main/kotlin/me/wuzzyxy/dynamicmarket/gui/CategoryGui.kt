@@ -63,14 +63,17 @@ class CategoryGui(private val ctx: GuiManager, private val category: String) {
             )
         }
 
-        if (content.isNotEmpty()) {
-            ctx.registry.register(player.uniqueId, categoryItems.map(MarketItem::name).toSet(), content)
-        }
-
+        // See ItemTradeGui.open — registering before open() loses the session to the close
+        // handler of the screen we came from.
         Window.builder()
             .setTitle(screen.title.withPlaceholders(mapOf("category" to displayCategory, "description" to screen.description.joinToString(" "))))
             .setUpperGui(gui)
-            .addCloseHandler { ctx.registry.unregister(player.uniqueId) }
+            .addOpenHandler {
+                if (content.isNotEmpty()) {
+                    ctx.registry.register(player.uniqueId, categoryItems.map(MarketItem::name).toSet(), content)
+                }
+            }
+            .addCloseHandler { ctx.registry.unregister(player.uniqueId, content) }
             .open(player)
     }
 
@@ -80,8 +83,10 @@ class CategoryGui(private val ctx: GuiManager, private val category: String) {
         .sortedBy(MarketItem::name)
         .filter { ctx.resolveIconOrWarn(it.name) != null }
 
+    // Provider per render, not one built up front — a prebuilt one freezes the prices at the
+    // moment the screen opened and notifyWindows then redraws the same stale numbers forever.
     private fun itemButton(config: GuiElementConfig, item: MarketItem): Item = Item.builder()
-        .setItemProvider(itemProvider(config, item))
+        .setItemProvider { _ -> itemProvider(config, item) }
         .addClickHandler { click -> ctx.openItem(click.player(), item) }
         .build()
 
@@ -94,6 +99,7 @@ class CategoryGui(private val ctx: GuiManager, private val category: String) {
             "buy" to ctx.economy.format(buyPrice),
             "sell" to ctx.economy.format(sellPrice),
         )
-        return config.render(ctx.resolver, placeholders, iconOverride = icon)
+        val blocks = mapOf("event_line" to ctx.manager.eventManager.activeEventLines(item))
+        return config.render(ctx.resolver, placeholders, iconOverride = icon, blocks = blocks)
     }
 }

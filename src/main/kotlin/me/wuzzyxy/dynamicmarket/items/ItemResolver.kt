@@ -46,7 +46,14 @@ class ItemResolver(private val craftEngineAvailable: Boolean) {
         return if (isCraftEngineId(marketItemName)) {
             craftEngineAvailable && CraftEngineItems.getCustomItemId(stack)?.asString() == marketItemName
         } else {
-            stack.type == Material.matchMaterial(marketItemName)
+            // A CraftEngine item is built on top of some vanilla material, so matching on type
+            // alone let a custom item be sold as whatever it was carved out of — the shop would
+            // eat someone's ruby and pay them the stone price. CraftEngine is here to make the
+            // menus look right, not to make its items tradeable as their base block.
+            stack.type == Material.matchMaterial(marketItemName) && !isCraftEngineItem(stack)
         }
     }
+
+    private fun isCraftEngineItem(stack: ItemStack): Boolean =
+        craftEngineAvailable && CraftEngineItems.getCustomItemId(stack) != null
 }

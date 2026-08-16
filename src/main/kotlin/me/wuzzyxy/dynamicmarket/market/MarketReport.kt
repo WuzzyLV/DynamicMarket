@@ -4,10 +4,9 @@ import me.wuzzyxy.dynamicmarket.configs.ReportSettings
 import me.wuzzyxy.dynamicmarket.database.Database
 import me.wuzzyxy.dynamicmarket.items.MarketItem
 import me.wuzzyxy.dynamicmarket.items.prettyItemName
-import net.kyori.adventure.text.minimessage.MiniMessage
+import me.wuzzyxy.dynamicmarket.util.MiniMessageText
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer
 import java.util.Locale
 import kotlin.math.abs
 import kotlin.math.max
@@ -295,11 +294,8 @@ class MarketReport(
     companion object {
         const val ALL: String = "all"
 
-        private val MINI: MiniMessage = MiniMessage.miniMessage()
-        private val LEGACY: LegacyComponentSerializer = LegacyComponentSerializer.legacySection()
-
         private fun render(template: String, vararg resolvers: TagResolver): String =
-            LEGACY.serialize(MINI.deserialize(template, *resolvers))
+            MiniMessageText.render(template, *resolvers)
 
         /*** Public: the holo board formats raw Mover/CategorySummary/VolumeMover data with this too. */
         fun formatChange(change: Double): String = String.format(Locale.ROOT, "%.1f", change)

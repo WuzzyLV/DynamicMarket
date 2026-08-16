@@ -19,6 +19,7 @@ class MarketDatabaseHandler(
 
     private var pushTask = NO_TASK
     private var snapshotTask = NO_TASK
+    private var pushFailing = false
 
     init {
         startTasks()
@@ -44,7 +45,22 @@ class MarketDatabaseHandler(
      * is that placeholders keep quoting the last known prices when MySQL is unreachable.
      */
     fun pushItems() {
-        val pushed = database.setAllItems(manager.workingItems) ?: return
+        val pushed = database.setAllItems(manager.workingItems)
+        if (pushed == null) {
+            // Said once per outage rather than every push interval — MySqlDatabase already
+            // warns per failed query, and this task runs every few seconds. Worth saying at
+            // all because the trades stuck in memory are ones players have already been paid
+            // for: a stop while this is failing keeps the money and rolls back the price.
+            if (!pushFailing) {
+                plugin.logger.warning("Market state is no longer reaching the database — trades are piling up in memory only")
+                pushFailing = true
+            }
+            return
+        }
+        if (pushFailing) {
+            plugin.logger.info("Market state is reaching the database again")
+            pushFailing = false
+        }
 
         manager.persistedItems.clear()
         manager.persistedItems.addAll(pushed)
@@ -70,6 +86,7 @@ class MarketDatabaseHandler(
             {
                 database.snapshotHistory()
                 database.pruneHistory(plugin.pluginConfig.HISTORY_RETENTION_DAYS)
+                database.pruneEvents(plugin.pluginConfig.EVENTS_RETENTION_DAYS)
             },
             200L,
             ticks,

@@ -1,0 +1,72 @@
+# Random market events. Each entry is a chance-picked flavour of price shock; how often
+# any of them fire at all, and how strong, is controlled by the `events:` block in
+# config.yml — this file is only "which ones, and what do they say".
+#
+# weight: relative pick chance among events whose scope actually has a target right now
+#   (a scope: item event with no eligible items loaded is skipped, weight and all).
+# scope: item = one random item from `targets`. category = one random category from
+#   `targets` (every item in it moves by the same %). global = every working item.
+# targets: the pool scope picks from. Item names (items.yml keys) for scope: item,
+#   category names (items.yml `category:` values) for scope: category. Leave out
+#   entirely for scope: global.
+# direction: boom = prices rise, bust = prices fall, both = coin-flipped each time this
+#   event fires.
+# multiplier_min/max: the price multiplier itself, picked randomly per trigger between
+#   the two. For direction: boom write it >1 (1.25 = prices end up 25% higher). For
+#   direction: bust write it <1 directly (0.7 = prices end up 30% lower) — it is NOT
+#   inverted for you. Only direction: both is special: since one range has to serve
+#   both signs, write it >1 there and the bust half of the coin-flip uses its reciprocal
+#   (1.25 boom / 1÷1.25≈0.8 bust) automatically. Applied the same %-wise to every item
+#   the event touches regardless of that item's own units_to_double, same as the curve
+#   itself already normalizes bulk vs hand-gathered items.
+# message: MiniMessage, broadcast to the whole server when this fires. %item%/%category%
+#   available.
+# badge: MiniMessage, one or more lines. This is what replaces the "top movers" block
+#   for the affected category on the /market home screen (and, on the item's own tile in
+#   its category screen) while the event is still meaningfully in effect. %item%,
+#   %category%, %sign% (+ or blank) and %change% (unsigned percent) are available.
+
+events:
+  lumber_rush:
+    weight: 10
+    scope: category
+    targets: [wood]
+    direction: both
+    multiplier_min: 1.3
+    multiplier_max: 1.8
+    message: "<green><bold>Lumber Rush!</bold> <white>Wood prices are on the move after a guild buying spree."
+    badge:
+      - "<gold><bold>Lumber Rush</bold> <white>- all %category% <white>%sign%%change%%"
+
+  masonry_glut:
+    weight: 8
+    scope: category
+    targets: [masonry, landscaping]
+    direction: bust
+    multiplier_min: 0.5
+    multiplier_max: 0.75
+    message: "<red><bold>Oversupply!</bold> <white>%category% prices are sliding after a bulk dump."
+    badge:
+      - "<gold><bold>Oversupply</bold> <white>- all %category% <red>%sign%%change%%"
+
+  vein_struck:
+    weight: 6
+    scope: item
+    targets: [gravel, sand, red_sand, clay]
+    direction: boom
+    multiplier_min: 1.4
+    multiplier_max: 2.0
+    message: "<red><bold>Shortage!</bold> <white>%item% is suddenly in high demand."
+    badge:
+      - "<gold><bold>%item% vein struck!</bold>"
+      - "<green>▲ %item% <green>%sign%%change%%"
+
+  market_crash:
+    weight: 2
+    scope: global
+    direction: bust
+    multiplier_min: 0.5
+    multiplier_max: 0.7
+    message: "<red><bold>Market Crash!</bold> <white>Prices across the board are falling."
+    badge:
+      - "<gold><bold>Market Crash</bold> <red>%sign%%change%%"
